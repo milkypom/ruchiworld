@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Y2K MOOD_GRAM</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React 18 & ReactDOM CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <!-- Babel Standalone for inline JSX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+  <style>
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="bg-black text-white antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const createIcon = (svgPaths) => ({ className = "w-4 h-4", ...props }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        {...props}
+      >
+        {svgPaths}
+      </svg>
+    );
+
+    const Heart = createIcon(<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />);
+    const MessageCircle = createIcon(<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />);
+    const Bookmark = createIcon(<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />);
+    const Grid = createIcon(<React.Fragment><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></React.Fragment>);
+    const Calendar = createIcon(<React.Fragment><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></React.Fragment>);
+    const BarChart2 = createIcon(<React.Fragment><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></React.Fragment>);
+    const Plus = createIcon(<path d="M5 12h14M12 5v14" />);
+    const Search = createIcon(<React.Fragment><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></React.Fragment>);
+    const ImageIcon = createIcon(<React.Fragment><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></React.Fragment>);
+    const MapPin = createIcon(<React.Fragment><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></React.Fragment>);
+    const X = createIcon(<path d="M18 6 6 18M6 6l12 12" />);
+    const Sparkles = createIcon(<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />);
+    const Share2 = createIcon(<React.Fragment><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></React.Fragment>);
+    const Trash2 = createIcon(<React.Fragment><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></React.Fragment>);
+    const Check = createIcon(<path d="M20 6 9 17 4 12" />);
+    const ChevronLeft = createIcon(<path d="m15 18-6-6 6-6" />);
+    const ChevronRight = createIcon(<path d="m9 18 6-6-6-6" />);
+    const Palette = createIcon(<React.Fragment><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.7 0-.42-.16-.82-.44-1.12-.27-.3-.43-.7-.43-1.14 0-.94.76-1.71 1.7-1.71h1.97C19.42 16.33 22 13.75 22 10.5 22 5.8 17.5 2 12 2z"/></React.Fragment>);
+    const Camera = createIcon(<React.Fragment><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></React.Fragment>);
+    const Eye = createIcon(<React.Fragment><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></React.Fragment>);
+    const Terminal = createIcon(<React.Fragment><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></React.Fragment>);
+    const Tag = createIcon(<path d="M12 2H2v10l11.29 11.29c.39.39 1.02.39 1.41 0l7.59-7.59c.39-.39.39-1.02 0-1.41L12 2zM7 7h.01" />);
+    const Hash = createIcon(<React.Fragment><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></React.Fragment>);
+
+    const THEMES = {
+      silver: {
+        id: 'silver',
+        name: '00s Chrome Silver',
+        bg: 'bg-[#EAEAEA]',
+        cardBg: 'bg-[#FFFFFF]',
+        textPrimary: 'text-[#111111]',
+        textSecondary: 'text-[#666666]',
+        accent: 'bg-[#111111]',
+        accentText: 'text-[#111111]',
+        accentHover: 'hover:bg-[#333333]',
+        border: 'border-[#111111]',
+        chipBg: 'bg-[#F0F0F0]',
+        badgeBg: 'bg-[#111111] text-white',
+        gradient: 'from-[#FFFFFF] via-[#EAEAEA] to-[#D4D4D4]'
+      },
+      obsidian: {
+        id: 'obsidian',
+        name: 'Pitch Black Mono',
+        bg: 'bg-[#09090B]',
+        cardBg: 'bg-[#121215]',
+        textPrimary: 'text-[#FAFAFA]',
+        textSecondary: 'text-[#A1A1AA]',
+        accent: 'bg-[#FAFAFA]',
+        accentText: 'text-[#FAFAFA]',
+        accentHover: 'hover:bg-[#E4E4E7]',
+        border: 'border-[#27272A]',
+        chipBg: 'bg-[#18181B]',
+        badgeBg: 'bg-[#FAFAFA] text-black',
+        gradient: 'from-[#09090B] via-[#121215] to-[#18181B]'
+      },
+      dither: {
+        id: 'dither',
+        name: 'Pixel Dot Monochrome',
+        bg: 'bg-[#F4F4F5]',
+        cardBg: 'bg-[#FFFFFF]',
+        textPrimary: 'text-[#18181B]',
+        textSecondary: 'text-[#71717A]',
+        accent: 'bg-[#27272A]',
+        accentText: 'text-[#27272A]',
+        accentHover: 'hover:bg-[#3F3F46]',
+        border: 'border-[#D4D4D8]',
+        chipBg: 'bg-[#E4E4E7]',
+        badgeBg: 'bg-[#27272A] text-white',
+        gradient: 'from-[#F4F4F5] via-[#E4E4E7] to-[#D4D4D8]'
+      },
+      cyberMono: {
+        id: 'cyberMono',
+        name: 'High Contrast Mono',
+        bg: 'bg-[#000000]',
+        cardBg: 'bg-[#000000]',
+        textPrimary: 'text-[#FFFFFF]',
+        textSecondary: 'text-[#888888]',
+        accent: 'bg-[#FFFFFF]',
+        accentText: 'text-[#FFFFFF]',
+        accentHover: 'hover:bg-[#DDDDDD]',
+        border: 'border-[#FFFFFF]',
+        chipBg: 'bg-[#111111]',
+        badgeBg: 'bg-[#FFFFFF] text-black',
+        gradient: 'from-[#000000] via-[#111111] to-[#222222]'
+      }
+    };
+
+    const PHOTO_FILTERS = [
+      { id: 'monoHigh', name: 'High Contrast B&W', filterCss: 'grayscale(1) contrast(1.6) brightness(0.95)' },
+      { id: 'silverGrain', name: 'Silver Grain', filterCss: 'grayscale(1) contrast(1.1) brightness(1.05) sepia(0.08)' },
+      { id: 'ditherNoise', name: '2000s Dither Mono', filterCss: 'grayscale(1) contrast(1.4) brightness(0.9) blur(0.2px)' },
+      { id: 'softMono', name: 'Soft Monochrome', filterCss: 'grayscale(1) contrast(0.85) brightness(1.1)' },
+      { id: 'camcorder', name: 'Camcorder B&W', filterCss: 'grayscale(1) contrast(1.25) brightness(0.85)' },
+      { id: 'none', name: 'Raw Monotone', filterCss: 'grayscale(1)' }
+    ];
+
+    const MOOD_OPTIONS = [
+      { id: 'chill', emoji: '🖤', label: 'CHILL', color: 'bg-zinc-800 text-zinc-100' },
+      { id: 'retro', emoji: '💿', label: 'RETRO', color: 'bg-zinc-200 text-zinc-900 border border-zinc-900' },
+      { id: 'calm', emoji: '☕', label: 'CALM', color: 'bg-zinc-700 text-zinc-100' },
+      { id: 'cyber', emoji: '💻', label: 'CYBER', color: 'bg-zinc-900 text-zinc-100' },
+      { id: 'dreamy', emoji: '☁️', label: 'DREAMY', color: 'bg-zinc-100 text-zinc-900 border border-zinc-400' },
+      { id: 'night', emoji: '🌙', label: 'NIGHT', color: 'bg-black text-white' }
+    ];
+
+    const WEATHER_OPTIONS = [
+      { id: 'sunny', emoji: '☀️', label: 'CLEAR' },
+      { id: 'cloudy', emoji: '☁️', label: 'CLOUDY' },
+      { id: 'rainy', emoji: '🌧️', label: 'RAIN' },
+      { id: 'snowy', emoji: '❄️', label: 'SNOW' },
+      { id: 'windy', emoji: '🍃', label: 'WIND' }
+    ];
+
+    const INITIAL_POSTS = [
+      {
+        id: 'post-1',
+        date: '2026-07-28',
+        displayDate: '2026.07.28 [TUE]',
+        title: '성수동 레트로 모노크롬 에세이',
+        content: '무채색으로 물든 도시의 골목길. 아날로그 카메라의 셔터 소리가 조용한 공기를 가른다. 스틸 프레임 속에 담긴 그늘과 빛의 대비가 이상하리만치 마음을 편안하게 만든다.',
+        photoUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
+        filter: 'monoHigh',
+        mood: MOOD_OPTIONS[1],
+        weather: WEATHER_OPTIONS[0],
+        location: 'SEOUL [SEOUNGSU]',
+        tags: ['Y2K_VIBE', 'MONO_LOG', 'BLACK_WHITE', 'ARCHIVE'],
+        likes: 42,
+        isLiked: true,
+        isBookmarked: true,
+        comments: [
+          { id: 'c1', author: 'MINJI_00', text: '사진 명암 콘트라스트 대박이에요! Y2K 피드 감성 최고 🖤', date: '15:20' }
+        ]
+      },
+      {
+        id: 'post-2',
+        date: '2026-07-25',
+        displayDate: '2026.07.25 [SAT]',
+        title: '한강의 흑백 잔상과 고요한 바람',
+        content: '해 질 무렵 한강 스탠드에 앉아 멍하니 강물을 바라보았다. 모든 색이 사라지고 어둠과 빛만 남는 시간. 조용히 생각의 타임라인을 정리해본다.',
+        photoUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80',
+        filter: 'silverGrain',
+        mood: MOOD_OPTIONS[5],
+        weather: WEATHER_OPTIONS[0],
+        location: 'BANPO_RIVER_PARK',
+        tags: ['NIGHT_WALK', 'MONOCHROME', 'SILVER_GRAIN', 'ARCHIVE'],
+        likes: 89,
+        isLiked: false,
+        isBookmarked: false,
+        comments: []
+      },
+      {
+        id: 'post-3',
+        date: '2026-07-21',
+        displayDate: '2026.07.21 [TUE]',
+        title: '빗소리와 캠코더 렌즈 너머',
+        content: '창문을 세차게 두드리는 여름 빗소리. 책상 위 모노크롬 디스플레이와 오래된 흑백 잡지 한 권. 그 누구의 방해도 받지 않는 정적.',
+        photoUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80',
+        filter: 'camcorder',
+        mood: MOOD_OPTIONS[2],
+        weather: WEATHER_OPTIONS[2],
+        location: 'STUDIO_ROOM_01',
+        tags: ['RAINY_DAY', 'CYBER_STATIC', 'MONO_LOG', 'QUIET_TIME'],
+        likes: 34,
+        isLiked: true,
+        isBookmarked: true,
+        comments: []
+      }
+    ];
+
+    function App() {
+      const [theme, setTheme] = useState(THEMES.silver);
+      const [posts, setPosts] = useState(INITIAL_POSTS);
+      const [activeTab, setActiveTab] = useState('feed');
+
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedMoodFilter, setSelectedMoodFilter] = useState('all');
+
+      const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+      const [selectedPostDetail, setSelectedPostDetail] = useState(null);
+      const [selectedTagReport, setSelectedTagReport] = useState(null);
+      const [storyIndex, setStoryIndex] = useState(0);
+      const [toastMessage, setToastMessage] = useState('');
+
+      const [detailTagInput, setDetailTagInput] = useState('');
+      const [editingCommentId, setEditingCommentId] = useState(null);
+      const [editingCommentText, setEditingCommentText] = useState('');
+
+      const [formData, setFormData] = useState({
+        title: '',
+        content: '',
+        date: new Date().toISOString().split('T')[0],
+        photoUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1000&q=80',
+        filter: 'monoHigh',
+        mood: MOOD_OPTIONS[0],
+        weather: WEATHER_OPTIONS[0],
+        location: '',
+        tagInput: '',
+        tags: ['Y2K_DIARY', 'MONO_LOG']
+      });
+
+      const showToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(''), 3000);
+      };
+
+      const dynamicTagHighlights = useMemo(() => {
+        const tagMap = {};
+
+        posts.forEach(post => {
+          post.tags.forEach(tag => {
+            const uppercaseTag = tag.toUpperCase();
+            if (!tagMap[uppercaseTag]) {
+              tagMap[uppercaseTag] = {
+                name: uppercaseTag,
+                posts: []
+              };
+            }
+            tagMap[uppercaseTag].posts.push(post);
+          });
+        });
+
+        return Object.values(tagMap)
+          .map(tagData => {
+            const sortedPosts = [...tagData.posts].sort((a, b) => new Date(b.date) - new Date(a.date));
+            return {
+              tag: tagData.name,
+              count: sortedPosts.length,
+              image: sortedPosts[0].photoUrl,
+              filter: sortedPosts[0].filter,
+              posts: sortedPosts
+            };
+          })
+          .sort((a, b) => b.count - a.count);
+      }, [posts]);
+
+      const handlePrevStory = () => {
+        if (storyIndex > 0) {
+          setStoryIndex(prev => prev - 1);
+        }
+      };
+
+      const handleNextStory = () => {
+        if (selectedTagReport && storyIndex < selectedTagReport.posts.length - 1) {
+          setStoryIndex(prev => prev + 1);
+        } else {
+          setSelectedTagReport(null);
+        }
+      };
+
+      const handleToggleLike = (postId, e) => {
+        e?.stopPropagation();
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const nextLiked = !p.isLiked;
+              if (nextLiked) showToast('🖤 [LIKE] 마음이 기록되었습니다.');
+              return {
+                ...p,
+                isLiked: nextLiked,
+                likes: nextLiked ? p.likes + 1 : p.likes - 1
+              };
+            }
+            return p;
+          })
+        );
+        if (selectedPostDetail && selectedPostDetail.id === postId) {
+          setSelectedPostDetail(prev => ({
+            ...prev,
+            isLiked: !prev.isLiked,
+            likes: !prev.isLiked ? prev.likes + 1 : prev.likes - 1
+          }));
+        }
+      };
+
+      const handleToggleBookmark = (postId, e) => {
+        e?.stopPropagation();
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const nextSaved = !p.isBookmarked;
+              showToast(nextSaved ? '🔖 [SAVED] Y2K 보관함에 저장' : '[RELEASED] 보관 해제');
+              return { ...p, isBookmarked: nextSaved };
+            }
+            return p;
+          })
+        );
+        if (selectedPostDetail && selectedPostDetail.id === postId) {
+          setSelectedPostDetail(prev => ({ ...prev, isBookmarked: !prev.isBookmarked }));
+        }
+      };
+
+      const handleAddTag = (tagToAdd) => {
+        const cleanTag = tagToAdd.trim().replace(/^#/, '').toUpperCase();
+        if (cleanTag && !formData.tags.includes(cleanTag)) {
+          setFormData(prev => ({
+            ...prev,
+            tags: [...prev.tags, cleanTag],
+            tagInput: ''
+          }));
+        }
+      };
+
+      const handleRemoveTag = (tagToRemove) => {
+        setFormData(prev => ({
+          ...prev,
+          tags: prev.tags.filter(t => t !== tagToRemove)
+        }));
+      };
+
+      const handleAddTagToPost = (postId, tagToAdd) => {
+        const cleanTag = tagToAdd.trim().replace(/^#/, '').toUpperCase();
+        if (!cleanTag) return;
+
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              if (!p.tags.includes(cleanTag)) {
+                const updatedTags = [...p.tags, cleanTag];
+                if (selectedPostDetail && selectedPostDetail.id === postId) {
+                  setSelectedPostDetail({ ...selectedPostDetail, tags: updatedTags });
+                }
+                showToast(`🏷️ #${cleanTag} 태그가 추가되었습니다.`);
+                return { ...p, tags: updatedTags };
+              }
+            }
+            return p;
+          })
+        );
+        setDetailTagInput('');
+      };
+
+      const handleRemoveTagFromPost = (postId, tagToRemove) => {
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const updatedTags = p.tags.filter(t => t !== tagToRemove);
+              if (selectedPostDetail && selectedPostDetail.id === postId) {
+                setSelectedPostDetail({ ...selectedPostDetail, tags: updatedTags });
+              }
+              showToast(`🗑️ #${tagToRemove} 태그가 제거되었습니다.`);
+              return { ...p, tags: updatedTags };
+            }
+            return p;
+          })
+        );
+      };
+
+      const handleCreatePost = (e) => {
+        e.preventDefault();
+        if (!formData.title.trim() || !formData.content.trim()) {
+          showToast('⚠️ [ERROR] 제목과 내용을 모두 작성하세요.');
+          return;
+        }
+
+        const selectedDate = formData.date ? new Date(formData.date + 'T00:00:00') : new Date();
+        const dateStr = formData.date || selectedDate.toISOString().split('T')[0];
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const displayDateStr = `${selectedDate.getFullYear()}.${String(selectedDate.getMonth() + 1).padStart(2, '0')}.${String(selectedDate.getDate()).padStart(2, '0')} [${days[selectedDate.getDay()]}]`;
+
+        const newEntry = {
+          id: `post-${Date.now()}`,
+          date: dateStr,
+          displayDate: displayDateStr,
+          title: formData.title,
+          content: formData.content,
+          photoUrl: formData.photoUrl,
+          filter: formData.filter,
+          mood: formData.mood,
+          weather: formData.weather,
+          location: formData.location.toUpperCase() || 'MONO_SPACE_00',
+          tags: formData.tags.length > 0 ? formData.tags : ['DIARY'],
+          likes: 0,
+          isLiked: false,
+          isBookmarked: false,
+          comments: []
+        };
+
+        setPosts([newEntry, ...posts]);
+        setIsCreateModalOpen(false);
+        showToast('💾 [LOGGED] 새로운 Y2K 일기가 업데이트 되었습니다.');
+
+        setFormData({
+          title: '',
+          content: '',
+          date: new Date().toISOString().split('T')[0],
+          photoUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1000&q=80',
+          filter: 'monoHigh',
+          mood: MOOD_OPTIONS[0],
+          weather: WEATHER_OPTIONS[0],
+          location: '',
+          tagInput: '',
+          tags: ['Y2K_DIARY', 'MONO_LOG']
+        });
+      };
+
+      const handleDeletePost = (postId) => {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        setSelectedPostDetail(null);
+        showToast('🗑️ [DELETED] 일기 삭제 완료.');
+      };
+
+      const handleAddComment = (postId, text) => {
+        if (!text.trim()) return;
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const updatedComments = [
+                ...p.comments,
+                { id: `c-${Date.now()}`, author: 'USER_2000', text, date: 'NOW' }
+              ];
+              if (selectedPostDetail && selectedPostDetail.id === postId) {
+                setSelectedPostDetail({ ...selectedPostDetail, comments: updatedComments });
+              }
+              return { ...p, comments: updatedComments };
+            }
+            return p;
+          })
+        );
+      };
+
+      const handleDeleteComment = (postId, commentId) => {
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const updatedComments = p.comments.filter(c => c.id !== commentId);
+              if (selectedPostDetail && selectedPostDetail.id === postId) {
+                setSelectedPostDetail({ ...selectedPostDetail, comments: updatedComments });
+              }
+              showToast('🗑️ [DELETED] 메모 댓글이 삭제 되었습니다.');
+              return { ...p, comments: updatedComments };
+            }
+            return p;
+          })
+        );
+      };
+
+      const handleStartEditComment = (comment) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentText(comment.text);
+      };
+
+      const handleSaveEditComment = (postId, commentId) => {
+        if (!editingCommentText.trim()) return;
+        setPosts(prev =>
+          prev.map(p => {
+            if (p.id === postId) {
+              const updatedComments = p.comments.map(c =>
+                c.id === commentId ? { ...c, text: editingCommentText.trim() } : c
+              );
+              if (selectedPostDetail && selectedPostDetail.id === postId) {
+                setSelectedPostDetail({ ...selectedPostDetail, comments: updatedComments });
+              }
+              showToast('✏️ [EDITED] 메모 댓글이 수정 되었습니다.');
+              return { ...p, comments: updatedComments };
+            }
+            return p;
+          })
+        );
+        setEditingCommentId(null);
+        setEditingCommentText('');
+      };
+
+      const handleImageFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setFormData(prev => ({ ...prev, photoUrl: reader.result }));
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const filteredPosts = posts.filter(p => {
+        const matchesSearch =
+          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          p.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesMood = selectedMoodFilter === 'all' || p.mood.id === selectedMoodFilter;
+        const matchesTab = activeTab === 'bookmarks' ? p.isBookmarked : true;
+
+        return matchesSearch && matchesMood && matchesTab;
+      });
+
+      return (
+        <div className={`min-h-screen ${theme.bg} ${theme.textPrimary} font-mono transition-colors duration-200 flex flex-col md:flex-row relative`}>
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-black text-white border-2 border-white px-4 py-2 font-bold text-xs shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce">
+              {toastMessage}
+            </div>
+          )}
+
+          {/* Desktop Navigation Sidebar / Mobile Top Header */}
+          <aside className={`w-full md:w-64 border-b md:border-b-0 md:border-r-2 ${theme.border} ${theme.cardBg} flex md:flex-col justify-between p-4 sticky top-0 z-30 shadow-sm`}>
+            <div>
+              <div className="flex items-center justify-between mb-0 md:mb-8 px-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 border-2 border-current bg-black text-white flex items-center justify-center font-bold text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    Y2K
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-base font-black tracking-widest uppercase">
+                      MOOD_GRAM
+                    </span>
+                    <span className="text-[9px] text-zinc-500 tracking-tighter">v2.2.0 TAG_ARCHIVE</span>
+                  </div>
+                </div>
+
+                {/* Mobile Header Actions */}
+                <div className="flex items-center gap-2 md:hidden">
+                  <button
+                    onClick={() => setActiveTab('stats')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 border-2 ${theme.border} ${
+                      activeTab === 'stats'
+                        ? 'bg-black text-white dark:bg-white dark:text-black font-bold'
+                        : `${theme.chipBg} hover:bg-black hover:text-white`
+                    } transition active:translate-y-0.5 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}
+                    title="STATISTICS"
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-extrabold tracking-wider">STATS</span>
+                  </button>
+
+                  <div className="relative group">
+                    <button
+                      title="테마 변경"
+                      className={`p-1.5 border-2 ${theme.border} ${theme.chipBg} transition active:translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}
+                    >
+                      <Palette className="w-4 h-4" />
+                    </button>
+                    <div className="absolute right-0 top-10 hidden group-hover:flex flex-col p-2 bg-black text-white border-2 border-white shadow-[6px_6px_0px_0px_rgba(255,255,255,0.4)] w-48 z-50 text-xs">
+                      <span className="text-[10px] text-zinc-400 font-bold px-2 py-1 uppercase tracking-wider border-b border-zinc-800 mb-1">[ THEME_SELECT ]</span>
+                      {Object.values(THEMES).map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => setTheme(t)}
+                          className={`text-left px-2.5 py-1.5 flex items-center justify-between transition ${theme.id === t.id ? 'bg-white text-black font-bold' : 'hover:bg-zinc-800'}`}
+                        >
+                          <span>{t.name}</span>
+                          {theme.id === t.id && <Check className="w-3 h-3" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Navigation Links */}
+              <nav className="hidden md:flex flex-col gap-1.5">
+                {[
+                  { id: 'feed', icon: ImageIcon, label: 'FEED_LOG' },
+                  { id: 'grid', icon: Grid, label: 'GRID_GALLERY' },
+                  { id: 'calendar', icon: Calendar, label: 'CALENDAR' },
+                  { id: 'stats', icon: BarChart2, label: 'STATISTICS' },
+                  { id: 'bookmarks', icon: Bookmark, label: 'SAVED_DRAFTS' }
+                ].map(tab => {
+                  const IconComponent = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2.5 px-3.5 py-2.5 border-2 transition text-xs font-bold tracking-wider ${
+                        isActive
+                          ? `${theme.border} ${theme.badgeBg} shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)]`
+                          : `border-transparent hover:${theme.border} ${theme.textSecondary}`
+                      }`}
+                    >
+                      <IconComponent className="w-4 h-4 shrink-0" />
+                      <span className="whitespace-nowrap">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="hidden md:block pt-4 border-t-2 border-dashed border-zinc-400 dark:border-zinc-800 text-[10px] text-zinc-500 space-y-1">
+              <div className="flex justify-between">
+                <span>MEMORY:</span>
+                <span className="font-bold">640KB OK</span>
+              </div>
+              <div className="flex justify-between">
+                <span>TAG_ENGINE:</span>
+                <span className="font-bold">ACTIVE</span>
+              </div>
+            </div>
+          </aside>
+
+          {/* Desktop Floating Write Button */}
+          <div className="hidden md:block fixed bottom-8 right-8 z-40">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className={`group relative flex items-center gap-2 px-5 py-4 border-2 ${theme.border} bg-black text-white hover:bg-zinc-800 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-150`}
+              title="WRITE NEW DIARY"
+            >
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="text-xs font-black tracking-widest">[ WRITE_DIARY ]</span>
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-white border border-black" />
+            </button>
+          </div>
+
+          {/* Mobile Bottom GNB */}
+          <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 border-t-2 ${theme.border} ${theme.cardBg} px-2 py-1.5 shadow-[0px_-4px_12px_rgba(0,0,0,0.2)] flex items-center justify-around font-mono`}>
+            {[
+              { id: 'feed', icon: ImageIcon, label: 'FEED' },
+              { id: 'grid', icon: Grid, label: 'GRID' },
+              { id: 'write', icon: Plus, label: 'WRITE', isAction: true },
+              { id: 'calendar', icon: Calendar, label: 'CAL' },
+              { id: 'bookmarks', icon: Bookmark, label: 'SAVED' }
+            ].map(tab => {
+              const IconComponent = tab.icon;
+              if (tab.isAction) {
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex flex-col items-center justify-center -mt-6 bg-black text-white border-2 border-white p-2.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:scale-95 transition"
+                    title="WRITE NEW DIARY"
+                  >
+                    <IconComponent className="w-5 h-5" />
+                    <span className="text-[8px] font-black tracking-tight uppercase mt-0.5">{tab.label}</span>
+                  </button>
+                );
+              }
+
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center justify-center p-1 transition text-[9px] font-bold tracking-tighter ${
+                    isActive
+                      ? 'text-black dark:text-white font-black underline underline-offset-4 decoration-2'
+                      : `${theme.textSecondary} hover:text-black dark:hover:text-white`
+                  }`}
+                >
+                  <IconComponent className={`w-4 h-4 mb-0.5 ${isActive ? 'scale-110' : ''}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Main Content Area */}
+          <main className="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 flex flex-col gap-6 pb-24 md:pb-8">
+
+            {/* Search & Filter Bar */}
+            <div className={`p-3.5 border-2 ${theme.border} ${theme.cardBg} shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row gap-3 items-center justify-between`}>
+              <div className={`w-full md:w-80 flex items-center gap-2 px-3 py-2 border ${theme.border} ${theme.chipBg} text-xs`}>
+                <Search className={`w-3.5 h-3.5 ${theme.textSecondary}`} />
+                <input
+                  type="text"
+                  placeholder="SEARCH_TAGS_OR_TITLE..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent border-none outline-none w-full text-xs font-mono uppercase tracking-wider placeholder:text-zinc-500"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} title="검색어 초기화">
+                    <X className="w-3.5 h-3.5 text-zinc-500 hover:text-black dark:hover:text-white" />
+                  </button>
+                )}
+              </div>
+
+              {/* Mood Filter Chips */}
+              <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs">
+                <button
+                  onClick={() => setSelectedMoodFilter('all')}
+                  className={`px-2.5 py-1 border transition text-[11px] font-bold ${
+                    selectedMoodFilter === 'all'
+                      ? `${theme.border} bg-black text-white`
+                      : `border-transparent ${theme.textSecondary} hover:border-zinc-400`
+                  }`}
+                >
+                  ALL
+                </button>
+                {MOOD_OPTIONS.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMoodFilter(selectedMoodFilter === m.id ? 'all' : m.id)}
+                    className={`px-2.5 py-1 border transition flex items-center gap-1 text-[11px] font-bold ${
+                      selectedMoodFilter === m.id
+                        ? `${theme.border} bg-black text-white`
+                        : `border-transparent ${theme.textSecondary} hover:border-zinc-400`
+                    }`}
+                  >
+                    <span>{m.emoji}</span>
+                    <span>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dynamic Tag Story Highlights Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5 text-xs font-black tracking-wider uppercase">
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>[ TAG_HIGHLIGHT_STORIES ]</span>
+                </div>
+                <span className="text-[10px] text-zinc-500 font-bold">인스타그램 스토리 방식으로 보기</span>
+              </div>
+
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {dynamicTagHighlights.map(highlight => {
+                  const filterObj = PHOTO_FILTERS.find(f => f.id === highlight.filter) || PHOTO_FILTERS[0];
+                  return (
+                    <button
+                      key={highlight.tag}
+                      onClick={() => {
+                        setSelectedTagReport(highlight);
+                        setStoryIndex(0);
+                      }}
+                      className="flex flex-col items-center gap-1.5 group shrink-0"
+                    >
+                      <div className="relative p-0.5 border-2 border-black dark:border-white bg-white dark:bg-black group-hover:scale-105 transition duration-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="w-16 h-16 bg-zinc-900 overflow-hidden relative border border-zinc-700">
+                          <img
+                            src={highlight.image}
+                            alt={highlight.tag}
+                            className="w-full h-full object-cover transition duration-300"
+                            style={{ filter: filterObj.filterCss }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition flex items-center justify-center">
+                            <span className="text-[10px] font-black text-white bg-black/80 px-1 border border-zinc-500">
+                              #{highlight.tag}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold tracking-tight uppercase truncate max-w-[80px]">
+                        #{highlight.tag}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Main Tabs Content */}
+            {activeTab === 'feed' || activeTab === 'bookmarks' ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
+                  {filteredPosts.length === 0 ? (
+                    <div className={`p-10 text-center border-2 ${theme.border} ${theme.cardBg} space-y-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                      <p className="text-3xl">📟</p>
+                      <p className="font-bold text-sm tracking-widest">[ NO_ENTRIES_FOUND ]</p>
+                      <p className={`text-xs ${theme.textSecondary}`}>
+                        새로운 일기를 기록하거나 필터를 변경해 보세요.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredPosts.map(post => {
+                      const filterObj = PHOTO_FILTERS.find(f => f.id === post.filter) || PHOTO_FILTERS[0];
+                      return (
+                        <article
+                          key={post.id}
+                          className={`border-2 ${theme.border} ${theme.cardBg} shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden transition`}
+                        >
+                          <div className="p-3.5 flex items-center justify-between border-b-2 border-black dark:border-white bg-zinc-100 dark:bg-zinc-900">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 border border-black dark:border-white bg-black text-white flex items-center justify-center shrink-0 text-sm">
+                                {post.mood.emoji}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-black text-xs tracking-wider">{post.displayDate}</h3>
+                                  <span className={`text-[9px] px-1.5 py-0.5 font-bold uppercase ${post.mood.color}`}>
+                                    {post.mood.label}
+                                  </span>
+                                </div>
+                                <div className={`flex items-center gap-2 text-[10px] ${theme.textSecondary} mt-0.5 font-bold`}>
+                                  <span className="flex items-center gap-0.5">
+                                    <MapPin className="w-3 h-3" /> {post.location}
+                                  </span>
+                                  <span>•</span>
+                                  <span>{post.weather.emoji} {post.weather.label}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => setSelectedPostDetail(post)}
+                              className={`p-1.5 border border-black dark:border-white ${theme.chipBg} hover:bg-black hover:text-white transition`}
+                              title="VIEW_DETAIL"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div
+                            className="relative aspect-square md:aspect-[4/3] bg-black overflow-hidden cursor-pointer group border-b-2 border-black dark:border-white"
+                            onClick={() => setSelectedPostDetail(post)}
+                          >
+                            <img
+                              src={post.photoUrl}
+                              alt={post.title}
+                              className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                              style={{ filter: filterObj.filterCss }}
+                            />
+
+                            <div className="absolute top-3 right-3 bg-black text-white border border-white text-[9px] px-2 py-0.5 font-bold uppercase tracking-widest">
+                              [ {filterObj.name} ]
+                            </div>
+
+                            <div className="absolute bottom-3 left-3 bg-black/80 text-zinc-300 font-mono text-[10px] px-2 py-0.5 border border-zinc-700 tracking-widest">
+                              REC • {post.date.replace(/-/g, '.')}
+                            </div>
+                          </div>
+
+                          <div className="p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <button
+                                  onClick={(e) => handleToggleLike(post.id, e)}
+                                  className="flex items-center gap-1.5 text-xs font-bold"
+                                >
+                                  <Heart
+                                    className={`w-5 h-5 transition ${
+                                      post.isLiked ? 'fill-black text-black dark:fill-white dark:text-white' : 'text-zinc-500'
+                                    }`}
+                                  />
+                                  <span>{post.likes}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => setSelectedPostDetail(post)}
+                                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-black dark:hover:text-white"
+                                >
+                                  <MessageCircle className="w-5 h-5" />
+                                  <span>{post.comments.length}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => setSelectedPostDetail(post)}
+                                  className="text-zinc-500 hover:text-black dark:hover:text-white"
+                                  title="CARD_EXPORT"
+                                >
+                                  <Share2 className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              <button onClick={(e) => handleToggleBookmark(post.id, e)}>
+                                <Bookmark
+                                  className={`w-5 h-5 transition ${
+                                    post.isBookmarked ? 'fill-black text-black dark:fill-white dark:text-white' : 'text-zinc-400'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+
+                            <div>
+                              <h2 className="font-extrabold text-sm md:text-base tracking-wide mb-1 uppercase">[ {post.title} ]</h2>
+                              <p className={`text-xs leading-relaxed ${theme.textSecondary} whitespace-pre-line`}>
+                                {post.content}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {post.tags.map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  onClick={() => {
+                                    const targetHighlight = dynamicTagHighlights.find(h => h.tag === tag.toUpperCase());
+                                    if (targetHighlight) {
+                                      setSelectedTagReport(targetHighlight);
+                                      setStoryIndex(0);
+                                    } else {
+                                      setSearchQuery(tag);
+                                    }
+                                  }}
+                                  className={`text-[10px] font-bold px-2 py-0.5 border border-zinc-400 dark:border-zinc-700 ${theme.chipBg} cursor-pointer hover:bg-black hover:text-white transition flex items-center gap-1`}
+                                >
+                                  <Hash className="w-2.5 h-2.5" />
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+
+                            {post.comments.length > 0 && (
+                              <div className="pt-2 border-t border-dashed border-zinc-300 dark:border-zinc-800 text-[11px] font-mono">
+                                <span className="font-bold">{post.comments[post.comments.length - 1].author}:</span> {post.comments[post.comments.length - 1].text}
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Profile Sidebar Widget */}
+                <div className="hidden md:block space-y-6">
+                  <div className={`p-5 border-2 ${theme.border} ${theme.cardBg} shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center space-y-3`}>
+                    <div className="relative w-16 h-16 mx-auto border-2 border-black dark:border-white p-0.5">
+                      <img
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+                        alt="Profile"
+                        className="w-full h-full object-cover grayscale contrast-125"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-xs tracking-widest uppercase">USER_ARCHIVE_01</h3>
+                      <p className={`text-[10px] ${theme.textSecondary} mt-1 font-mono`}>
+                        // Y2K MONOCHROME DIARY SYSTEM
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t-2 border-black dark:border-white text-center text-[10px] font-bold">
+                      <div className="p-1 border border-zinc-300 dark:border-zinc-800">
+                        <div>{posts.length}</div>
+                        <div className="text-[9px] text-zinc-500">POSTS</div>
+                      </div>
+                      <div className="p-1 border border-zinc-300 dark:border-zinc-800">
+                        <div>{dynamicTagHighlights.length}</div>
+                        <div className="text-[9px] text-zinc-500">TAGS</div>
+                      </div>
+                      <div className="p-1 border border-zinc-300 dark:border-zinc-800">
+                        <div>2000s</div>
+                        <div className="text-[9px] text-zinc-500">VIBE</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`p-4 border-2 ${theme.border} bg-black text-white space-y-2 shadow-[3px_3px_0px_0px_rgba(200,200,200,0.5)]`}>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-zinc-400">
+                      <Sparkles className="w-3 h-3" />
+                      <span>MONO_MOTTO.TXT</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-zinc-300 italic font-mono">
+                      "기록되지 않은 순간은 어둠 속으로 지워진다. 0과 1 사이, 나의 흑백 일기."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'grid' ? (
+              <div className="space-y-4">
+                <h2 className="text-xs font-black tracking-widest flex items-center gap-2 uppercase">
+                  <Grid className="w-4 h-4" />
+                  <span>[ PHOTO_GRID_GALLERY ]</span>
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {filteredPosts.map(post => {
+                    const filterObj = PHOTO_FILTERS.find(f => f.id === post.filter) || PHOTO_FILTERS[0];
+                    return (
+                      <div
+                        key={post.id}
+                        onClick={() => setSelectedPostDetail(post)}
+                        className="relative aspect-square border-2 border-black dark:border-white bg-black overflow-hidden cursor-pointer group shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <img
+                          src={post.photoUrl}
+                          alt={post.title}
+                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                          style={{ filter: filterObj.filterCss }}
+                        />
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition duration-200 flex flex-col items-center justify-center text-white p-2 text-center gap-1 font-mono">
+                          <div className="flex flex-col items-center">
+                            <span className="text-lg leading-none">{post.mood.emoji}</span>
+                            <span className="text-[9px] font-bold tracking-widest uppercase text-zinc-300 mt-0.5">{post.mood.label}</span>
+                          </div>
+                          <p className="text-xs font-bold uppercase line-clamp-1">{post.title}</p>
+                          <div className="flex items-center gap-3 text-[10px] font-bold mt-1">
+                            <span className="flex items-center gap-1">
+                              <Heart className="w-3 h-3 fill-white" /> {post.likes}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageCircle className="w-3 h-3" /> {post.comments.length}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : activeTab === 'calendar' ? (
+              <div className={`p-5 border-2 ${theme.border} ${theme.cardBg} space-y-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    <h2 className="text-xs font-black tracking-widest uppercase">2026.07 [MONO_CALENDAR]</h2>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button className={`p-1 border ${theme.border}`}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs font-bold px-2">JULY</span>
+                    <button className={`p-1 border ${theme.border}`}>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1.5 text-center font-mono">
+                  {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d, i) => (
+                    <div key={i} className="text-[10px] font-black py-1 border-b border-zinc-300 dark:border-zinc-800">
+                      {d}
+                    </div>
+                  ))}
+
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-20 border border-dashed border-zinc-200 dark:border-zinc-900 opacity-20" />
+                  ))}
+
+                  {Array.from({ length: 31 }).map((_, idx) => {
+                    const dayNum = idx + 1;
+                    const dateStr = `2026-07-${String(dayNum).padStart(2, '0')}`;
+                    const matchedPost = posts.find(p => p.date === dateStr);
+
+                    return (
+                      <div
+                        key={dayNum}
+                        onClick={() => {
+                          if (matchedPost) setSelectedPostDetail(matchedPost);
+                        }}
+                        className={`h-20 p-1 relative border transition flex flex-col justify-between ${
+                          matchedPost
+                            ? 'border-2 border-black dark:border-white bg-black text-white cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                            : `${theme.border} bg-zinc-50 dark:bg-zinc-950`
+                        }`}
+                      >
+                        <span className="text-[9px] font-bold self-start">{dayNum}</span>
+
+                        {matchedPost ? (
+                          <div className="relative flex-1 overflow-hidden border border-zinc-700 mt-0.5">
+                            <img
+                              src={matchedPost.photoUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              style={{
+                                filter: PHOTO_FILTERS.find(f => f.id === matchedPost.filter)?.filterCss
+                              }}
+                            />
+                            <div className="absolute top-0.5 right-0.5 bg-black text-white text-[8px] px-1">
+                              {matchedPost.mood.emoji}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center text-zinc-300 dark:text-zinc-800 text-[9px]">
+                            .
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : activeTab === 'stats' ? (
+              <div className="space-y-6">
+                <h2 className="text-xs font-black tracking-widest flex items-center gap-2 uppercase">
+                  <BarChart2 className="w-4 h-4" />
+                  <span>[ MOOD_ANALYTICS_REPORT ]</span>
+                </h2>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: 'TOTAL LOGS', val: `${posts.length}` },
+                    { label: 'ACTIVE TAGS', val: `${dynamicTagHighlights.length}` },
+                    { label: 'TOTAL LIKES', val: `${posts.reduce((acc, cur) => acc + cur.likes, 0)}` },
+                    { label: 'STREAK', val: '05 DAYS' }
+                  ].map((st, i) => (
+                    <div key={i} className={`p-4 border-2 ${theme.border} ${theme.cardBg} shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}>
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase">{st.label}</span>
+                      <div className="text-base md:text-lg font-black mt-1 uppercase">{st.val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={`p-5 border-2 ${theme.border} ${theme.cardBg} space-y-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                  <h3 className="font-black text-xs uppercase tracking-wider">// MOOD_FREQUENCY_DISTRIBUTION</h3>
+                  <div className="space-y-3 font-mono">
+                    {MOOD_OPTIONS.map(m => {
+                      const count = posts.filter(p => p.mood.id === m.id).length;
+                      const percentage = posts.length > 0 ? Math.round((count / posts.length) * 100) : 0;
+                      return (
+                        <div key={m.id} className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px] font-bold">
+                            <span className="flex items-center gap-1.5">
+                              <span>{m.emoji}</span>
+                              <span>{m.label}</span>
+                            </span>
+                            <span>{count} LOGS ({percentage}%)</span>
+                          </div>
+                          <div className="w-full h-3 border border-black dark:border-white bg-zinc-200 dark:bg-zinc-800 p-0.5">
+                            <div
+                              className="h-full bg-black dark:bg-white transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </main>
+
+          {/* New Log Create Modal */}
+          {isCreateModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+              <div className="w-full max-w-xl border-2 border-white bg-black text-white shadow-[8px_8px_0px_0px_rgba(255,255,255,0.4)] p-5 space-y-4 my-8 font-mono">
+                <div className="flex items-center justify-between border-b-2 border-white pb-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-zinc-400" />
+                    <h2 className="font-black text-xs tracking-widest uppercase">[ WRITE_NEW_MONO_LOG.EXE ]</h2>
+                  </div>
+                  <button
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="p-1 border border-white hover:bg-white hover:text-black transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreatePost} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">// PHOTO_UPLOAD & MONO_FILTER</label>
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
+                      <div className="relative w-full sm:w-40 h-40 border-2 border-white bg-zinc-900 shrink-0 overflow-hidden">
+                        <img
+                          src={formData.photoUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          style={{
+                            filter: PHOTO_FILTERS.find(f => f.id === formData.filter)?.filterCss
+                          }}
+                        />
+                        <label className="absolute bottom-1.5 right-1.5 bg-black text-white border border-white p-1.5 cursor-pointer hover:bg-white hover:text-black transition">
+                          <Camera className="w-3.5 h-3.5" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageFileUpload}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="w-full space-y-1.5">
+                        <span className="text-[10px] text-zinc-400 uppercase">SELECT FILTER PRESET:</span>
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                          {PHOTO_FILTERS.map(f => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, filter: f.id })}
+                              className={`p-1.5 border text-left font-bold transition uppercase ${
+                                formData.filter === f.id
+                                  ? 'bg-white text-black border-white'
+                                  : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:border-white'
+                              }`}
+                            >
+                              {f.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 block mb-1 uppercase">// LOG_DATE (날짜 설정)</label>
+                      <input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-xs text-white font-mono outline-none focus:border-white uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-zinc-400 block mb-1 uppercase">// LOCATION</label>
+                      <input
+                        type="text"
+                        placeholder="E.G. SEOUL [HONGDAE]..."
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-xs outline-none focus:border-white uppercase placeholder:text-zinc-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="LOG_TITLE..."
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 text-xs font-bold outline-none focus:border-white uppercase placeholder:text-zinc-600"
+                    />
+
+                    <textarea
+                      rows={4}
+                      placeholder="WRITE YOUR MONOCHROME MEMORIES..."
+                      value={formData.content}
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 text-xs outline-none focus:border-white resize-none placeholder:text-zinc-600"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">// TAG_MANAGEMENT</label>
+
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {formData.tags.map(t => (
+                        <span
+                          key={t}
+                          className="px-2 py-0.5 bg-white text-black text-[10px] font-bold flex items-center gap-1 shadow-xs"
+                        >
+                          #{t}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(t)}
+                            className="hover:text-red-600 transition"
+                            title="태그 삭제"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-xs">
+                        <Tag className="w-3.5 h-3.5 text-zinc-400" />
+                        <input
+                          type="text"
+                          placeholder="ADD_TAG_AND_PRESS_ENTER..."
+                          value={formData.tagInput}
+                          onChange={(e) => setFormData({ ...formData, tagInput: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddTag(formData.tagInput);
+                            }
+                          }}
+                          className="bg-transparent outline-none w-full text-xs font-mono uppercase"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddTag(formData.tagInput)}
+                        className="px-3 py-1.5 border border-white text-xs font-bold hover:bg-white hover:text-black uppercase"
+                      >
+                        ADD
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 overflow-x-auto pt-1">
+                      <span className="text-[9px] text-zinc-500 uppercase font-bold shrink-0">RECOMMENDED:</span>
+                      {dynamicTagHighlights.map(h => (
+                        <button
+                          key={h.tag}
+                          type="button"
+                          onClick={() => handleAddTag(h.tag)}
+                          className="text-[9px] px-1.5 py-0.5 border border-zinc-700 bg-zinc-900 hover:border-white text-zinc-300 font-bold shrink-0"
+                        >
+                          +#{h.tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateModalOpen(false)}
+                      className="px-4 py-2 border border-zinc-600 text-xs font-bold hover:border-white uppercase"
+                    >
+                      CANCEL
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-white text-black border border-white text-xs font-black hover:bg-zinc-200 transition uppercase"
+                    >
+                      SAVE_LOG
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Tag Story Highlight Modal */}
+          {selectedTagReport && selectedTagReport.posts.length > 0 && (() => {
+            const currentStoryPost = selectedTagReport.posts[storyIndex] || selectedTagReport.posts[0];
+            const filterObj = PHOTO_FILTERS.find(f => f.id === currentStoryPost.filter) || PHOTO_FILTERS[0];
+
+            return (
+              <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 font-mono select-none">
+                <div className="relative w-full max-w-sm h-[88vh] max-h-[720px] bg-black border-2 border-white text-white shadow-[10px_10px_0px_0px_rgba(255,255,255,0.3)] flex flex-col justify-between overflow-hidden">
+
+                  <div className="absolute top-0 left-0 right-0 z-30 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent space-y-2">
+                    <div className="flex items-center gap-1 w-full">
+                      {selectedTagReport.posts.map((_, idx) => (
+                        <div
+                          key={idx}
+                          className="h-1 flex-1 bg-zinc-800 overflow-hidden rounded-full"
+                        >
+                          <div
+                            className={`h-full transition-all duration-300 ${
+                              idx === storyIndex
+                                ? 'bg-white'
+                                : idx < storyIndex
+                                ? 'bg-zinc-400'
+                                : 'bg-transparent'
+                            }`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 border border-white bg-zinc-900 flex items-center justify-center text-xs font-black">
+                          #{selectedTagReport.tag.slice(0, 2)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-black tracking-wider">
+                            <span>#{selectedTagReport.tag}</span>
+                            <span className="text-[9px] bg-white text-black px-1 font-bold">
+                              {storyIndex + 1}/{selectedTagReport.posts.length}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-zinc-400 block font-bold">
+                            {currentStoryPost.displayDate}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setSearchQuery(selectedTagReport.tag);
+                            setSelectedTagReport(null);
+                            showToast(`🔎 [FILTER] 피드가 #${selectedTagReport.tag} 로 필터링 되었습니다.`);
+                          }}
+                          className="text-[9px] px-2 py-1 border border-zinc-500 hover:border-white bg-black/60 font-bold uppercase"
+                          title="Filter feed"
+                        >
+                          FILTER_FEED
+                        </button>
+                        <button
+                          onClick={() => setSelectedTagReport(null)}
+                          className="p-1 border border-white bg-black text-white hover:bg-white hover:text-black transition"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative w-full h-full bg-zinc-950 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={currentStoryPost.photoUrl}
+                      alt={currentStoryPost.title}
+                      className="w-full h-full object-cover"
+                      style={{ filter: filterObj.filterCss }}
+                    />
+
+                    <div className="absolute top-16 left-3 bg-black/70 border border-zinc-600 px-2 py-0.5 text-[9px] font-bold text-red-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                      REC • MONO_STORY
+                    </div>
+
+                    <div className="absolute top-16 right-3 bg-black/70 border border-zinc-600 px-2 py-0.5 text-[9px] font-bold text-zinc-300">
+                      {filterObj.name}
+                    </div>
+
+                    <button
+                      onClick={handlePrevStory}
+                      disabled={storyIndex === 0}
+                      className="absolute left-0 top-0 bottom-0 w-1/3 z-20 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition group disabled:pointer-events-none"
+                    >
+                      {storyIndex > 0 && (
+                        <div className="p-2 border border-white bg-black/80 text-white rounded-full">
+                          <ChevronLeft className="w-5 h-5" />
+                        </div>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleNextStory}
+                      className="absolute right-0 top-0 bottom-0 w-1/3 z-20 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition group"
+                    >
+                      <div className="p-2 border border-white bg-black/80 text-white rounded-full">
+                        <ChevronRight className="w-5 h-5" />
+                      </div>
+                    </button>
+
+                    {storyIndex > 0 && (
+                      <button
+                        onClick={handlePrevStory}
+                        className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 bg-black/60 border border-white/50 text-white"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={handleNextStory}
+                      className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 bg-black/60 border border-white/50 text-white"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="relative z-30 p-4 bg-gradient-to-t from-black via-black/90 to-transparent border-t border-zinc-800 space-y-2.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 px-1.5 py-0.5">
+                          <span className="text-sm leading-none">{currentStoryPost.mood.emoji}</span>
+                        </div>
+                        <span className={`px-1.5 py-0.5 font-bold uppercase ${currentStoryPost.mood.color}`}>
+                          {currentStoryPost.mood.label}
+                        </span>
+                      </div>
+                      <span className="text-zinc-400 font-bold flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {currentStoryPost.location}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-sm uppercase text-white tracking-wide">
+                        [ {currentStoryPost.title} ]
+                      </h3>
+                      <p className="text-xs text-zinc-300 line-clamp-3 leading-relaxed">
+                        {currentStoryPost.content}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-dashed border-zinc-800 text-xs">
+                      <button
+                        onClick={(e) => handleToggleLike(currentStoryPost.id, e)}
+                        className="flex items-center gap-1 text-xs font-bold"
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            currentStoryPost.isLiked ? 'fill-white text-white' : 'text-zinc-400'
+                          }`}
+                        />
+                        <span>{currentStoryPost.likes}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSelectedTagReport(null);
+                          setSelectedPostDetail(currentStoryPost);
+                        }}
+                        className="px-3 py-1 bg-white text-black font-black text-[10px] hover:bg-zinc-200 transition tracking-wider flex items-center gap-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>FULL_VIEW</span>
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Post Detail Modal */}
+          {selectedPostDetail && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+              <div className="w-full max-w-lg border-2 border-white bg-black text-white shadow-[8px_8px_0px_0px_rgba(255,255,255,0.4)] overflow-hidden my-8 font-mono">
+                <div className="p-5 space-y-4">
+
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 border border-white bg-zinc-900 text-white flex items-center justify-center shrink-0 text-sm">
+                        {selectedPostDetail.mood.emoji}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-zinc-400">{selectedPostDetail.displayDate}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 font-bold uppercase ${selectedPostDetail.mood.color}`}>
+                            {selectedPostDetail.mood.label}
+                          </span>
+                        </div>
+                        <h3 className="font-black text-xs uppercase tracking-wider">[ {selectedPostDetail.title} ]</h3>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPostDetail(null)}
+                      className="p-1 border border-white hover:bg-white hover:text-black"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="border-2 border-white bg-zinc-950 p-3 space-y-3">
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-black border border-zinc-800">
+                      <img
+                        src={selectedPostDetail.photoUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        style={{
+                          filter: PHOTO_FILTERS.find(f => f.id === selectedPostDetail.filter)?.filterCss
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs leading-relaxed text-zinc-300">
+                        {selectedPostDetail.content}
+                      </p>
+                      <div className="flex items-center justify-between text-[9px] text-zinc-400 pt-2 border-t border-zinc-800 uppercase font-bold">
+                        <span>📍 {selectedPostDetail.location}</span>
+                        <span>WEATHER: {selectedPostDetail.weather.label}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Tag Management in Post Detail */}
+                  <div className="space-y-2 p-3 border border-zinc-800 bg-zinc-950">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-zinc-400 uppercase flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        <span>// MANAGE_POST_TAGS</span>
+                      </span>
+                      <span className="text-[9px] text-zinc-500">클릭하여 태그 삭제</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedPostDetail.tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-zinc-800 text-zinc-100 text-[10px] font-bold border border-zinc-600 flex items-center gap-1 group hover:border-red-400"
+                        >
+                          #{tag}
+                          <button
+                            onClick={() => handleRemoveTagFromPost(selectedPostDetail.id, tag)}
+                            className="text-zinc-400 hover:text-red-400 transition"
+                            title="태그 삭제"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-1.5 pt-1">
+                      <input
+                        type="text"
+                        placeholder="NEW_TAG_NAME..."
+                        value={detailTagInput}
+                        onChange={(e) => setDetailTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTagToPost(selectedPostDetail.id, detailTagInput);
+                          }
+                        }}
+                        className="flex-1 px-2.5 py-1 bg-zinc-900 border border-zinc-700 text-[11px] outline-none focus:border-white uppercase placeholder:text-zinc-600 font-mono"
+                      />
+                      <button
+                        onClick={() => handleAddTagToPost(selectedPostDetail.id, detailTagInput)}
+                        className="px-3 py-1 bg-white text-black text-[10px] font-black hover:bg-zinc-200 uppercase"
+                      >
+                        + ADD_TAG
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Comments Section */}
+                  <div className="space-y-2 pt-1">
+                    <h4 className="text-[10px] font-black text-zinc-400 uppercase">// MEMO_LOGS ({selectedPostDetail.comments.length})</h4>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                      {selectedPostDetail.comments.map(c => (
+                        <div key={c.id} className="p-2 border border-zinc-800 bg-zinc-950 text-[10px] space-y-1">
+                          <div className="flex items-center justify-between font-bold text-zinc-400">
+                            <span className="text-zinc-300">{c.author}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-zinc-500">{c.date}</span>
+                              {editingCommentId !== c.id && (
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleStartEditComment(c)}
+                                    className="text-[9px] text-zinc-400 hover:text-white uppercase font-bold underline"
+                                  >
+                                    EDIT
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteComment(selectedPostDetail.id, c.id)}
+                                    className="p-0.5 text-zinc-400 hover:text-red-400 transition"
+                                    title="댓글 삭제"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {editingCommentId === c.id ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              <input
+                                type="text"
+                                value={editingCommentText}
+                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                className="flex-1 px-2 py-0.5 bg-zinc-900 border border-zinc-700 text-white text-[10px] outline-none"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveEditComment(selectedPostDetail.id, c.id);
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSaveEditComment(selectedPostDetail.id, c.id)}
+                                className="px-2 py-0.5 bg-white text-black text-[9px] font-bold"
+                              >
+                                SAVE
+                              </button>
+                              <button
+                                onClick={() => setEditingCommentId(null)}
+                                className="px-2 py-0.5 border border-zinc-600 text-zinc-400 text-[9px]"
+                              >
+                                CANCEL
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-zinc-300">{c.text}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-1.5 pt-1">
+                      <input
+                        type="text"
+                        placeholder="ADD_MEMO..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddComment(selectedPostDetail.id, e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className="flex-1 px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-xs outline-none focus:border-white uppercase placeholder:text-zinc-600"
+                      />
+                      <button
+                        onClick={(e) => {
+                          const input = e.currentTarget.previousElementSibling;
+                          handleAddComment(selectedPostDetail.id, input.value);
+                          input.value = '';
+                        }}
+                        className="px-3 py-1.5 bg-white text-black text-xs font-black hover:bg-zinc-200 uppercase"
+                      >
+                        ADD
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-3 border-t border-zinc-800">
+                    <button
+                      onClick={() => handleDeletePost(selectedPostDetail.id)}
+                      className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 uppercase font-bold"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>DELETE_LOG</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        showToast('🖼️ [EXPORT] Y2K 감성 모노 카드가 복사되었습니다.');
+                      }}
+                      className="px-3 py-1.5 border border-white text-xs font-bold hover:bg-white hover:text-black transition flex items-center gap-1.5 uppercase"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>EXPORT_CARD</span>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
