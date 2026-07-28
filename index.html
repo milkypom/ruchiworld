@@ -116,6 +116,12 @@
       box-shadow: 7px 7px 0px #000;
     }
 
+    /* 비활성화된 카드는 호버 효과 제거 */
+    .card.disabled-card:hover {
+      transform: none;
+      box-shadow: 4px 4px 0px #000;
+    }
+
     .card-top {
       display: flex;
       justify-content: space-between;
@@ -153,6 +159,7 @@
       word-break: break-all;
     }
 
+    /* 기본 활성화 버튼 */
     .btn-link {
       width: 100%;
       padding: 10px 0;
@@ -170,6 +177,15 @@
     .btn-link:hover {
       background: #ffffff;
       color: #000000;
+    }
+
+    /* 🚫 비활성화 버튼 스타일 */
+    .btn-link.disabled {
+      background: #a0a0a0;
+      color: #666666;
+      border-color: #888888;
+      cursor: not-allowed;
+      pointer-events: none; /* 클릭 이벤트 완벽 차단 */
     }
 
     footer {
@@ -207,7 +223,6 @@
   <footer>RUCHIMOND SYSTEM // Y2K MONOTONE EDITION</footer>
 
   <script>
-    // 💡 여기서 카드의 이름(title)과 링크(url)를 직접 수정하실 수 있습니다.
     const CARDS_DATA = [
       { num: '01', title: 'Timer', url: 'my-apps/pomodoro_timer.html' },
       { num: '02', title: 'memo', url: 'my-apps/mono_memo.html' },
@@ -217,13 +232,31 @@
       { num: '06', title: 'X', url: 'x' }
     ];
 
+    // 유효한 URL인지 검사하는 함수 ('x', 'X', '#', 빈값 판별)
+    function isValidUrl(url) {
+      if (!url) return false;
+      const cleanUrl = url.trim().toLowerCase();
+      return cleanUrl !== '' && cleanUrl !== '#' && cleanUrl !== 'x';
+    }
+
     function renderGrid() {
       const grid = document.getElementById('cardGrid');
       grid.innerHTML = '';
 
       CARDS_DATA.forEach((item) => {
+        const hasUrl = isValidUrl(item.url);
         const card = document.createElement('div');
-        card.className = 'card';
+        
+        // 유효하지 않으면 disabled-card 클래스 추가
+        card.className = hasUrl ? 'card' : 'card disabled-card';
+
+        // 비활성화 상태에 따른 속성 및 텍스트 분기
+        const linkAttr = hasUrl 
+          ? `href="${item.url}" target="_blank" rel="noopener noreferrer"` 
+          : `aria-disabled="true"`;
+        const linkClass = hasUrl ? 'btn-link' : 'btn-link disabled';
+        const linkText = hasUrl ? 'RUN ▶' : 'OFFLINE';
+
         card.innerHTML = `
           <div class="card-top">
             <span class="card-num">${item.num}</span>
@@ -231,9 +264,8 @@
           </div>
           <div class="card-body">
             <div class="card-title">${item.title}</div>
-            <!-- <div class="card-url-preview">${item.url}</div> -->
           </div>
-          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-link">RUN ▶</a>
+          <a ${linkAttr} class="${linkClass}">${linkText}</a>
         `;
         grid.appendChild(card);
       });
