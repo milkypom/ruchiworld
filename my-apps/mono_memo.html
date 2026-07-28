@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONO MEMO — Tag-Centric Minimal Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        mono: {
+                            50: '#f9f9f9',
+                            100: '#f0f0f0',
+                            200: '#e0e0e0',
+                            300: '#b0b0b0',
+                            400: '#888888',
+                            500: '#555555',
+                            600: '#333333',
+                            700: '#222222',
+                            800: '#171717',
+                            900: '#0a0a0a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Custom Scrollbar for minimal look */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888888;
+            border-radius: 2px;
+        }
+
+        .markdown-body p { margin-bottom: 0.5rem; }
+        .markdown-body a { text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+        .markdown-body a:hover { opacity: 0.7; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-body ul:has(input[type="checkbox"]) { list-style-type: none; padding-left: 0.25rem; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.5rem; }
+        .markdown-body code { background-color: rgba(128,128,128,0.15); padding: 0.1rem 0.3rem; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+        .markdown-body blockquote { border-left: 2px solid currentColor; padding-left: 0.75rem; opacity: 0.8; font-style: italic; }
+        /* 마크다운 제목(Heading) 스타일 추가 */
+        .markdown-body h1 { font-size: 1.3em; font-weight: 700; margin-top: 0.75rem; margin-bottom: 0.35rem; line-height: 1.25; }
+        .markdown-body h2 { font-size: 1.15em; font-weight: 700; margin-top: 0.6rem; margin-bottom: 0.25rem; line-height: 1.3; }
+        .markdown-body h3 { font-size: 1.05em; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.25rem; line-height: 1.35; }
+        .markdown-body h4, .markdown-body h5, .markdown-body h6 { font-size: 0.95em; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body class="bg-white dark:bg-mono-900 text-mono-900 dark:text-mono-50 min-h-full flex flex-col antialiased selection:bg-mono-900 selection:text-white dark:selection:bg-white dark:selection:text-mono-900">
+
+    <header class="border-b border-mono-200 dark:border-mono-800 bg-white/80 dark:bg-mono-900/80 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetFilters()">
+                <div class="w-8 h-8 bg-mono-900 dark:bg-white flex items-center justify-center rounded-lg">
+                    <span class="text-white dark:text-mono-900 font-black text-lg tracking-tighter">#</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight uppercase leading-none">MONO MEMO</h1>
+                    <span class="text-[10px] tracking-widest text-mono-400 font-mono uppercase">TAG-FIRST NOTES</span>
+                </div>
+            </div>
+
+            <!-- Global Search & Actions -->
+            <div class="flex items-center space-x-3">
+                <div class="relative w-48 sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs"></i>
+                    <input type="text" id="searchInput" placeholder="메모 검색 또는 #태그..." 
+                           oninput="handleSearch(this.value)"
+                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-mono-100 dark:bg-mono-800 border border-transparent focus:border-mono-900 dark:focus:border-white rounded-md outline-none transition-all font-mono">
+                </div>
+
+                <!-- Data & Stats Modal Button -->
+                <button onclick="openDataModal()" class="p-2 rounded-md hover:bg-mono-100 dark:hover:bg-mono-800 transition" title="통계 및 백업/데이터 관리">
+                    <i class="fa-solid fa-database text-sm"></i>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" class="p-2 rounded-md hover:bg-mono-100 dark:hover:bg-mono-800 transition" title="다크/라이트 모드">
+                    <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
+                </button>
+
+                <!-- New Memo Button -->
+                <button onclick="openNoteModal()" class="flex items-center space-x-1.5 bg-mono-900 hover:bg-mono-700 dark:bg-white dark:hover:bg-mono-200 text-white dark:text-mono-900 px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition shadow-sm">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>새 메모</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+        
+        <!-- Sidebar: Tag Navigation -->
+        <aside class="w-full md:w-64 shrink-0 space-y-4">
+            <div class="bg-mono-50 dark:bg-mono-800/50 p-4 rounded-xl border border-mono-200 dark:border-mono-800">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <!-- 태그 목록 접기/펼치기 토글 버튼 -->
+                        <button onclick="toggleTagListCollapse()" class="flex items-center space-x-1.5 hover:text-mono-900 dark:hover:text-white transition group">
+                            <i id="tagListCollapseIcon" class="fa-solid fa-chevron-down text-[10px] text-mono-400 group-hover:text-mono-900 dark:group-hover:text-white transition-transform duration-200"></i>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-mono-500 dark:text-mono-400 group-hover:text-mono-900 dark:group-hover:text-white">태그 목록</h2>
+                        </button>
+                        <span id="totalTagsCount" class="text-[10px] font-mono px-2 py-0.5 bg-mono-200 dark:bg-mono-700 rounded-full font-medium">0</span>
+                    </div>
+                    <!-- 태그 그룹 추가 버튼 -->
+                    <button onclick="openGroupModal()" title="새 태그 그룹 추가" class="text-xs px-2 py-1 bg-mono-200 dark:bg-mono-700 hover:bg-mono-300 dark:hover:bg-mono-600 rounded transition flex items-center space-x-1 font-mono">
+                        <i class="fa-solid fa-folder-plus text-[10px]"></i>
+                        <span>+ 그룹</span>
+                    </button>
+                </div>
+
+                <!-- Tag list container -->
+                <div id="tagList" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1 transition-all duration-300">
+                    <!-- Dynamic tag buttons & groups inserted here -->
+                </div>
+
+                <div class="mt-3 pt-2 border-t border-mono-200 dark:border-mono-700 flex items-center justify-between">
+                    <button onclick="clearTagFilter()" id="clearTagBtn" class="hidden text-xs text-mono-500 hover:text-mono-900 dark:hover:text-white flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                        <span>필터 초기화</span>
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+        <main class="flex-1 space-y-4">
+            
+            <!-- Active Filter Banner -->
+            <div id="filterStatus" class="hidden flex items-center justify-between bg-mono-900 dark:bg-white text-white dark:text-mono-900 px-4 py-2 rounded-lg text-xs font-mono">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-filter text-[10px]"></i>
+                    <span>선택된 태그: <strong id="activeTagName" class="underline"></strong></span>
+                </div>
+                <button onclick="clearTagFilter()" class="hover:opacity-75">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Note Cards Grid -->
+            <div id="notesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                <!-- Notes dynamically inserted here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-mono-200 dark:border-mono-800 rounded-2xl">
+                <div class="w-12 h-12 rounded-full bg-mono-100 dark:bg-mono-800 flex items-center justify-center text-mono-400 mb-3">
+                    <i class="fa-regular fa-folder-open text-xl"></i>
+                </div>
+                <h3 class="text-sm font-semibold text-mono-700 dark:text-mono-300">표시할 메모가 없습니다</h3>
+                <p class="text-xs text-mono-400 mt-1 max-w-xs">새 메모를 작성하거나 태그 필터를 변경해 보세요.</p>
+                <button onclick="openNoteModal()" class="mt-4 px-3 py-1.5 bg-mono-900 dark:bg-white text-white dark:text-mono-900 rounded-md text-xs font-semibold">
+                    첫 메모 작성하기
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tag Group Create/Edit Modal -->
+    <div id="groupModal" class="fixed inset-0 bg-mono-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-mono-900 border border-mono-300 dark:border-mono-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div class="px-6 py-4 border-b border-mono-200 dark:border-mono-800 flex items-center justify-between">
+                <h3 id="groupModalTitle" class="text-sm font-bold tracking-tight">태그 그룹 생성</h3>
+                <button onclick="closeGroupModal()" class="text-mono-400 hover:text-mono-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="editGroupId">
+                <div>
+                    <label class="block text-[11px] font-mono text-mono-400 mb-1 uppercase tracking-wider">그룹 이름</label>
+                    <input type="text" id="groupNameInput" placeholder="예: 업무, 일상, 프로젝트..." 
+                           class="w-full text-xs bg-mono-50 dark:bg-mono-800/50 px-3 py-2 rounded-lg border border-mono-200 dark:border-mono-800 focus:border-mono-900 dark:focus:border-white outline-none font-mono">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-mono text-mono-400 mb-1 uppercase tracking-wider">포함할 태그 선택</label>
+                    <div id="groupTagCheckboxes" class="space-y-1.5 max-h-48 overflow-y-auto p-2 bg-mono-50 dark:bg-mono-800/40 border border-mono-200 dark:border-mono-800 rounded-lg">
+                        <!-- Tag checkboxes dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-mono-200 dark:border-mono-800 bg-mono-50 dark:bg-mono-800/30 flex justify-between items-center">
+                <button id="deleteGroupBtn" onclick="deleteGroupFromModal()" class="text-xs text-red-500 hover:underline hidden">
+                    그룹 삭제
+                </button>
+                <div class="flex space-x-2 ml-auto">
+                    <button onclick="closeGroupModal()" class="px-3 py-1.5 border border-mono-300 dark:border-mono-700 text-mono-700 dark:text-mono-300 rounded-lg text-xs font-semibold hover:bg-mono-200 dark:hover:bg-mono-700 transition">
+                        취소
+                    </button>
+                    <button onclick="saveGroup()" class="px-3 py-1.5 bg-mono-900 dark:bg-white text-white dark:text-mono-900 rounded-lg text-xs font-semibold hover:bg-mono-700 dark:hover:bg-mono-200 transition">
+                        저장
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data & Stats Modal -->
+    <div id="dataModal" class="fixed inset-0 bg-mono-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-mono-900 border border-mono-300 dark:border-mono-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div class="px-6 py-4 border-b border-mono-200 dark:border-mono-800 flex items-center justify-between">
+                <h3 class="text-sm font-bold tracking-tight flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>통계 및 백업 관리</span>
+                </h3>
+                <button onclick="closeDataModal()" class="text-mono-400 hover:text-mono-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5 overflow-y-auto font-mono text-xs">
+                
+                <!-- Summary Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-mono-50 dark:bg-mono-800/50 p-3 rounded-xl border border-mono-200 dark:border-mono-800">
+                        <span class="text-[10px] text-mono-400 block uppercase mb-1">전체 메모</span>
+                        <span id="modalStatTotalNotes" class="text-lg font-bold text-mono-900 dark:text-white">0</span>개
+                    </div>
+                    <div class="bg-mono-50 dark:bg-mono-800/50 p-3 rounded-xl border border-mono-200 dark:border-mono-800">
+                        <span class="text-[10px] text-mono-400 block uppercase mb-1">상단 고정</span>
+                        <span id="modalStatPinnedNotes" class="text-lg font-bold text-mono-900 dark:text-white">0</span>개
+                    </div>
+                    <div class="bg-mono-50 dark:bg-mono-800/50 p-3 rounded-xl border border-mono-200 dark:border-mono-800">
+                        <span class="text-[10px] text-mono-400 block uppercase mb-1">등록된 태그</span>
+                        <span id="modalStatTotalTags" class="text-lg font-bold text-mono-900 dark:text-white">0</span>개
+                    </div>
+                    <div class="bg-mono-50 dark:bg-mono-800/50 p-3 rounded-xl border border-mono-200 dark:border-mono-800">
+                        <span class="text-[10px] text-mono-400 block uppercase mb-1">태그 그룹</span>
+                        <span id="modalStatTotalGroups" class="text-lg font-bold text-mono-900 dark:text-white">0</span>개
+                    </div>
+                </div>
+
+                <!-- Backup & Restore -->
+                <div class="space-y-2 pt-2 border-t border-mono-200 dark:border-mono-800">
+                    <label class="block text-[11px] font-mono text-mono-400 uppercase tracking-wider">데이터 백업 / 복원</label>
+                    <div class="flex gap-2">
+                        <button onclick="exportData()" class="flex-1 py-2 text-xs font-semibold bg-mono-900 text-white dark:bg-white dark:text-mono-900 rounded-lg hover:opacity-90 transition flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-download"></i>
+                            <span>JSON 내보내기</span>
+                        </button>
+                        <button onclick="importDataTrigger()" class="flex-1 py-2 text-xs font-semibold border border-mono-300 dark:border-mono-700 rounded-lg hover:bg-mono-100 dark:hover:bg-mono-800 transition flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>JSON 불러오기</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            <div class="px-6 py-3 border-t border-mono-200 dark:border-mono-800 bg-mono-50 dark:bg-mono-800/30 flex justify-end">
+                <button onclick="closeDataModal()" class="px-4 py-1.5 bg-mono-900 dark:bg-white text-white dark:text-mono-900 rounded-lg text-xs font-semibold">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Edit/Create Modal -->
+    <div id="noteModal" class="fixed inset-0 bg-mono-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-mono-900 border border-mono-300 dark:border-mono-700 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-mono-200 dark:border-mono-800 flex items-center justify-between">
+                <h3 id="modalTitle" class="text-sm font-bold tracking-tight">새 메모 작성</h3>
+                <button onclick="closeNoteModal()" class="text-mono-400 hover:text-mono-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="editNoteId">
+
+                <div>
+                    <input type="text" id="noteTitleInput" placeholder="제목을 입력하세요..." 
+                           class="w-full text-base font-bold bg-transparent border-b border-mono-200 dark:border-mono-800 pb-2 focus:border-mono-900 dark:focus:border-white outline-none transition">
+                </div>
+
+                <div>
+                    <textarea id="noteContentInput" rows="7" placeholder="내용을 입력하세요 (마크다운 지원, #태그 자동인식)..." 
+                              class="w-full text-xs font-mono bg-mono-50 dark:bg-mono-800/50 p-3 rounded-lg border border-mono-200 dark:border-mono-800 focus:border-mono-900 dark:focus:border-white outline-none transition resize-none"></textarea>
+
+                    <!-- 마크다운 단축키 툴바 (작성란 하단 배치) -->
+                    <div class="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 text-xs">
+                        <button type="button" onclick="insertMarkdown('**', '**', '진한 글씨')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="진하게">
+                            <i class="fa-solid fa-bold text-[10px]"></i> 진하게
+                        </button>
+                        <button type="button" onclick="insertMarkdown('*', '*', '기울임')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="기울임">
+                            <i class="fa-solid fa-italic text-[10px]"></i> 기울임
+                        </button>
+                        <button type="button" onclick="insertMarkdown('~~', '~~', '취소선')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="취소선">
+                            <i class="fa-solid fa-strikethrough text-[10px]"></i> 취소선
+                        </button>
+                        <button type="button" onclick="insertMarkdown('### ', '', '제목')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="제목">
+                            <i class="fa-solid fa-heading text-[10px]"></i> 제목
+                        </button>
+                        <button type="button" onclick="insertMarkdown('- ', '', '목록 항목')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="글머리 목록">
+                            <i class="fa-solid fa-list-ul text-[10px]"></i> 목록
+                        </button>
+                        <button type="button" onclick="insertMarkdown('1. ', '', '순서 항목')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="순서 목록">
+                            <i class="fa-solid fa-list-ol text-[10px]"></i> 번호
+                        </button>
+                        <button type="button" onclick="insertMarkdown('- [ ] ', '', '할 일')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="체크박스">
+                            <i class="fa-regular fa-square-check text-[10px]"></i> 체크박스
+                        </button>
+                        <button type="button" onclick="insertMarkdown('> ', '', '인용구')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="인용구">
+                            <i class="fa-solid fa-quote-left text-[10px]"></i> 인용구
+                        </button>
+                        <button type="button" onclick="insertMarkdown('```\n', '\n```', '코드')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="코드 블록">
+                            <i class="fa-solid fa-code text-[10px]"></i> 코드
+                        </button>
+                        <button type="button" onclick="insertMarkdown('[', '](https://)', '링크 텍스트')" class="px-2 py-1 bg-mono-100 dark:bg-mono-800 hover:bg-mono-200 dark:hover:bg-mono-700 rounded border border-mono-200 dark:border-mono-700 text-[11px] font-mono transition flex items-center gap-1 shrink-0" title="링크">
+                            <i class="fa-solid fa-link text-[10px]"></i> 링크
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tag input & Suggestions -->
+                <div>
+                    <label class="block text-[11px] font-mono text-mono-400 mb-1 uppercase tracking-wider">태그 (쉼표 또는 띄어쓰기로 구분)</label>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-mono-400 font-mono text-xs">#</span>
+                        <input type="text" id="noteTagsInput" placeholder="아이디어, 작업, 중요" 
+                               class="flex-1 text-xs bg-mono-50 dark:bg-mono-800/50 px-3 py-2 rounded-lg border border-mono-200 dark:border-mono-800 focus:border-mono-900 dark:focus:border-white outline-none font-mono">
+                    </div>
+                    <p class="text-[10px] text-mono-400 mt-1 font-mono">본문 안의 #태그 문구도 자동으로 인식되어 추출됩니다.</p>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer text-xs font-mono">
+                        <input type="checkbox" id="notePinInput" class="rounded border-mono-300 dark:border-mono-700 text-mono-900 focus:ring-0">
+                        <span>상단에 고정하기</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-mono-200 dark:border-mono-800 bg-mono-50 dark:bg-mono-800/30 flex justify-end space-x-2">
+                <button onclick="closeNoteModal()" class="px-4 py-2 border border-mono-300 dark:border-mono-700 text-mono-700 dark:text-mono-300 rounded-lg text-xs font-semibold hover:bg-mono-200 dark:hover:bg-mono-700 transition">
+                    취소
+                </button>
+                <button onclick="saveNote()" class="px-4 py-2 bg-mono-900 dark:bg-white text-white dark:text-mono-900 rounded-lg text-xs font-semibold hover:bg-mono-700 dark:hover:bg-mono-200 transition">
+                    저장하기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-mono-900 text-white dark:bg-white dark:text-mono-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-mono transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg">메모가 저장되었습니다.</span>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'mono_memo_app_data_v1';
+        const STORAGE_GROUPS_KEY = 'mono_memo_app_groups_v1';
+        let notes = [];
+        let tagGroups = []; // [{ id: '1', name: '업무', tags: ['작업', '프로젝트'] }]
+        let selectedTag = null;
+        let selectedGroup = null; // Filter notes by all tags in a group
+        let collapsedGroups = {};
+        let isTagListCollapsed = false;
+        let searchQuery = '';
+
+        // Initial default sample notes if empty
+        const sampleNotes = [
+            {
+                id: '1',
+                title: '모노톤 메모앱 사용법',
+                content: '태그 중심으로 생각과 메모를 정리하는 **MINIMAL MEMO**입니다.\n\n- 본문에 `#아이디어` 처럼 태그를 넣으면 자동 생성됩니다.\n- 태그 사이드바를 통해 원하는 항목을 한눈에 필터링하세요.',
+                tags: ['안내', '아이디어'],
+                pinned: true,
+                createdAt: Date.now() - 3600000 * 2,
+                updatedAt: Date.now() - 3600000 * 2
+            },
+            {
+                id: '2',
+                title: '오늘의 할 일 목록',
+                content: '1. 디자인 시스템 리팩토링\n2. 태그 컴포넌트 정밀 조정\n3. 다크모드 대조비 확인\n\n#할일 #작업',
+                tags: ['할일', '작업'],
+                pinned: false,
+                createdAt: Date.now() - 3600000 * 5,
+                updatedAt: Date.now() - 3600000 * 5
+            },
+            {
+                id: '3',
+                title: '미니멀리즘 원칙',
+                content: '"Simplicity is the ultimate sophistication." - Leonardo da Vinci\n불필요한 요소를 제거하고 본질에 집중합니다.',
+                tags: ['명언', '디자인'],
+                pinned: false,
+                createdAt: Date.now() - 3600000 * 24,
+                updatedAt: Date.now() - 3600000 * 24
+            }
+        ];
+
+        const sampleGroups = [
+            { id: 'g1', name: '업무 및 작업', tags: ['할일', '작업', '디자인'] },
+            { id: 'g2', name: '생각과 모음', tags: ['아이디어', '명언', '안내'] }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadNotes();
+            loadGroups();
+            initTheme();
+            render();
+        });
+
+        function loadNotes() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    notes = JSON.parse(saved);
+                } catch (e) {
+                    notes = sampleNotes;
+                }
+            } else {
+                notes = sampleNotes;
+                saveToStorage();
+            }
+        }
+
+        function loadGroups() {
+            const saved = localStorage.getItem(STORAGE_GROUPS_KEY);
+            if (saved) {
+                try {
+                    tagGroups = JSON.parse(saved);
+                } catch (e) {
+                    tagGroups = sampleGroups;
+                }
+            } else {
+                tagGroups = sampleGroups;
+                saveGroupsToStorage();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+        }
+
+        function saveGroupsToStorage() {
+            localStorage.setItem(STORAGE_GROUPS_KEY, JSON.stringify(tagGroups));
+        }
+
+        function extractHashtags(text) {
+            if (!text) return [];
+            const regex = /#([\w가-힣-]+)/g;
+            const tags = [];
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                tags.push(match[1]);
+            }
+            return tags;
+        }
+
+        function getAllTags() {
+            const tagMap = {};
+            notes.forEach(note => {
+                const combined = new Set([...(note.tags || [])]);
+                combined.forEach(tag => {
+                    const cleanTag = tag.trim().replace(/^#/, '');
+                    if (cleanTag) {
+                        tagMap[cleanTag] = (tagMap[cleanTag] || 0) + 1;
+                    }
+                });
+            });
+            return tagMap;
+        }
+
+        function render() {
+            renderTags();
+            renderNotes();
+            renderStats();
+        }
+
+        function renderTags() {
+            const tagListEl = document.getElementById('tagList');
+            const collapseIcon = document.getElementById('tagListCollapseIcon');
+            const tagCounts = getAllTags();
+            const allTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+
+            document.getElementById('totalTagsCount').innerText = allTags.length;
+
+            if (isTagListCollapsed) {
+                tagListEl.classList.add('hidden');
+                if (collapseIcon) collapseIcon.style.transform = 'rotate(-90deg)';
+                return;
+            } else {
+                tagListEl.classList.remove('hidden');
+                if (collapseIcon) collapseIcon.style.transform = 'rotate(0deg)';
+            }
+
+            if (allTags.length === 0) {
+                tagListEl.innerHTML = `<span class="text-xs text-mono-400 italic block py-2">태그가 없습니다</span>`;
+                return;
+            }
+
+            let html = `
+                <button onclick="clearTagFilter()" 
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs font-mono flex items-center justify-between transition ${selectedTag === null && selectedGroup === null ? 'bg-mono-900 text-white dark:bg-white dark:text-mono-900 font-bold' : 'hover:bg-mono-200 dark:hover:bg-mono-700 text-mono-600 dark:text-mono-300'}">
+                    <span># 전체보기</span>
+                    <span class="text-[10px] opacity-75">${notes.length}</span>
+                </button>
+            `;
+
+            // Track tags assigned to groups
+            const groupedTagSet = new Set();
+            tagGroups.forEach(g => (g.tags || []).forEach(t => groupedTagSet.add(t)));
+
+            // 1. Render Tag Groups
+            if (tagGroups.length > 0) {
+                tagGroups.forEach(group => {
+                    const isGroupSelected = selectedGroup === group.id;
+                    const isCollapsed = !!collapsedGroups[group.id];
+                    const validGroupTags = (group.tags || []).filter(t => allTags.includes(t));
+
+                    // Count notes for this group
+                    const groupNoteCount = notes.filter(n => 
+                        (n.tags || []).some(t => validGroupTags.includes(t.trim().replace(/^#/, '')))
+                    ).length;
+
+                    html += `
+                        <div class="border border-mono-200 dark:border-mono-800 rounded-lg overflow-hidden transition-all">
+                            <!-- Group Header -->
+                            <div class="flex items-center justify-between px-2.5 py-1.5 text-xs font-mono ${isGroupSelected ? 'bg-mono-900 text-white dark:bg-white dark:text-mono-900' : 'bg-mono-100/70 dark:bg-mono-800/40 hover:bg-mono-200 dark:hover:bg-mono-800'}">
+                                <button onclick="selectGroup('${group.id}')" class="flex items-center space-x-1.5 flex-1 text-left truncate font-bold">
+                                    <i class="fa-regular fa-folder text-[10px] opacity-75"></i>
+                                    <span class="truncate">${escapeHtml(group.name)}</span>
+                                    <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-mono-200 dark:bg-mono-700 text-mono-700 dark:text-mono-300 ${isGroupSelected ? '!bg-white/20 !text-white dark:!text-mono-900' : ''}">${groupNoteCount}</span>
+                                </button>
+                                <div class="flex items-center space-x-1 shrink-0 ml-1">
+                                    <button onclick="event.stopPropagation(); openGroupModal('${group.id}')" title="그룹 수정" class="p-1 opacity-60 hover:opacity-100">
+                                        <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); toggleGroupCollapse('${group.id}')" title="접기/펼치기" class="p-1 opacity-60 hover:opacity-100">
+                                        <i class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Group Nested Tags -->
+                            ${!isCollapsed ? `
+                                <div class="p-1.5 space-y-1 bg-white/50 dark:bg-mono-900/40">
+                                    ${validGroupTags.length > 0 ? validGroupTags.map(tag => {
+                                        const isTagSelected = selectedTag === tag && !selectedGroup;
+                                        const count = tagCounts[tag] || 0;
+                                        return `
+                                            <button onclick="selectTag('${tag}')" 
+                                                    class="w-full text-left pl-4 pr-2 py-1 rounded text-[11px] font-mono flex items-center justify-between transition ${isTagSelected ? 'bg-mono-800 text-white dark:bg-mono-100 dark:text-mono-900 font-bold' : 'hover:bg-mono-100 dark:hover:bg-mono-800 text-mono-600 dark:text-mono-400'}">
+                                                <span class="truncate"># ${escapeHtml(tag)}</span>
+                                                <span class="text-[9px] opacity-75 ml-1">${count}</span>
+                                            </button>
+                                        `;
+                                    }).join('') : '<span class="text-[10px] text-mono-400 italic px-2 py-1 block">이 그룹에 태그가 없습니다</span>'}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            // 2. Render Ungrouped Tags
+            const ungroupedTags = allTags.filter(tag => !groupedTagSet.has(tag));
+            if (ungroupedTags.length > 0) {
+                html += `
+                    <div class="pt-2">
+                        <div class="text-[10px] font-mono text-mono-400 uppercase tracking-wider mb-1 px-1">미분류 태그</div>
+                        <div class="space-y-1">
+                            ${ungroupedTags.map(tag => {
+                                const isSelected = selectedTag === tag && !selectedGroup;
+                                const count = tagCounts[tag];
+                                return `
+                                    <button onclick="selectTag('${tag}')" 
+                                            class="w-full text-left px-3 py-1.5 rounded-lg text-xs font-mono flex items-center justify-between transition ${isSelected ? 'bg-mono-900 text-white dark:bg-white dark:text-mono-900 font-bold' : 'hover:bg-mono-200 dark:hover:bg-mono-700 text-mono-600 dark:text-mono-300'}">
+                                        <span class="truncate"># ${escapeHtml(tag)}</span>
+                                        <span class="text-[10px] opacity-75 ml-2 font-mono">${count}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            tagListEl.innerHTML = html;
+
+            // Filter Status Banner Update
+            const clearBtn = document.getElementById('clearTagBtn');
+            const filterStatus = document.getElementById('filterStatus');
+            const activeTagName = document.getElementById('activeTagName');
+
+            if (selectedTag || selectedGroup) {
+                clearBtn.classList.remove('hidden');
+                filterStatus.classList.remove('hidden');
+                if (selectedGroup) {
+                    const grp = tagGroups.find(g => g.id === selectedGroup);
+                    activeTagName.innerText = grp ? `그룹: [${grp.name}]` : '선택 그룹';
+                } else {
+                    activeTagName.innerText = `#${selectedTag}`;
+                }
+            } else {
+                clearBtn.classList.add('hidden');
+                filterStatus.classList.add('hidden');
+            }
+        }
+
+        function renderNotes() {
+            const gridEl = document.getElementById('notesGrid');
+            const emptyEl = document.getElementById('emptyState');
+
+            // Filter logic
+            let filtered = notes.filter(note => {
+                const noteTags = (note.tags || []).map(t => t.trim().replace(/^#/, ''));
+
+                // Group filter
+                if (selectedGroup) {
+                    const group = tagGroups.find(g => g.id === selectedGroup);
+                    if (group) {
+                        const hasGroupTag = noteTags.some(t => (group.tags || []).includes(t));
+                        if (!hasGroupTag) return false;
+                    }
+                }
+
+                // Tag filter
+                if (selectedTag) {
+                    if (!noteTags.includes(selectedTag)) return false;
+                }
+
+                // Search query filter
+                if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase().trim();
+                    const titleMatch = note.title.toLowerCase().includes(q);
+                    const contentMatch = note.content.toLowerCase().includes(q);
+                    const tagMatch = note.tags.some(t => t.toLowerCase().includes(q));
+                    if (!titleMatch && !contentMatch && !tagMatch) return false;
+                }
+
+                return true;
+            });
+
+            // Sort logic: Pinned first, then newest updated
+            filtered.sort((a, b) => {
+                if (a.pinned !== b.pinned) return b.pinned ? 1 : -1;
+                return b.updatedAt - a.updatedAt;
+            });
+
+            if (filtered.length === 0) {
+                gridEl.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+
+            gridEl.innerHTML = filtered.map(note => {
+                const dateStr = new Date(note.updatedAt).toLocaleDateString('ko-KR', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                let taskIndex = 0;
+                let rawParsed = marked.parse(note.content || '');
+                rawParsed = rawParsed.replace(/<a\b/gi, '<a target="_blank" rel="noopener noreferrer"');
+
+                const parsedMarkdown = rawParsed.replace(/<input\b[^>]*>/gi, (match) => {
+                    const isChecked = /checked/i.test(match);
+                    const currentIdx = taskIndex++;
+                    return `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTaskCheckbox('${note.id}', ${currentIdx}, this.checked)" onclick="event.stopPropagation()" class="cursor-pointer accent-mono-900 dark:accent-white my-0 mr-1.5 align-middle w-3.5 h-3.5">`;
+                });
+
+                const tagPills = (note.tags || []).map(t => {
+                    const clean = t.trim().replace(/^#/, '');
+                    const isCurrent = selectedTag === clean;
+                    return `
+                        <span onclick="event.stopPropagation(); selectTag('${clean}')" 
+                              class="cursor-pointer text-[10px] font-mono px-2 py-0.5 rounded border ${isCurrent ? 'bg-mono-900 text-white border-mono-900 dark:bg-white dark:text-mono-900' : 'border-mono-300 dark:border-mono-700 hover:border-mono-900 dark:hover:border-white'} transition">
+                            #${escapeHtml(clean)}
+                        </span>
+                    `;
+                }).join(' ');
+
+                return `
+                    <div class="group bg-white dark:bg-mono-900 border ${note.pinned ? 'border-mono-900 dark:border-white shadow-md' : 'border-mono-200 dark:border-mono-800'} rounded-xl p-5 flex flex-col justify-between hover:border-mono-900 dark:hover:border-mono-100 transition duration-200 relative">
+                        
+                        <div>
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <h3 class="font-bold text-sm leading-snug break-words ${note.title ? '' : 'text-mono-400 font-normal italic'}">
+                                    ${escapeHtml(note.title || '제목 없음')}
+                                </h3>
+                                <div class="flex items-center space-x-1 shrink-0 opacity-80 group-hover:opacity-100 transition">
+                                    <button onclick="togglePin('${note.id}')" title="${note.pinned ? '고정 해제' : '고정'}" class="p-1 hover:text-mono-900 dark:hover:text-white transition">
+                                        <i class="${note.pinned ? 'fa-solid' : 'fa-regular'} fa-bookmark text-xs"></i>
+                                    </button>
+                                    <button onclick="openNoteModal('${note.id}')" title="수정" class="p-1 hover:text-mono-900 dark:hover:text-white transition">
+                                        <i class="fa-regular fa-pen-to-square text-xs"></i>
+                                    </button>
+                                    <button onclick="deleteNote('${note.id}')" title="삭제" class="p-1 hover:text-red-500 transition">
+                                        <i class="fa-regular fa-trash-can text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="text-xs text-mono-600 dark:text-mono-300 markdown-body line-clamp-6 mb-4">
+                                ${parsedMarkdown}
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-mono-100 dark:border-mono-800/80 flex flex-col gap-2">
+                            <div class="flex flex-wrap gap-1">
+                                ${tagPills || '<span class="text-[10px] text-mono-400 font-mono">태그 없음</span>'}
+                            </div>
+                            <div class="text-[10px] text-mono-400 font-mono text-right">
+                                ${dateStr}
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStats() {
+            const allTags = Object.keys(getAllTags());
+            document.getElementById('modalStatTotalNotes').innerText = notes.length;
+            document.getElementById('modalStatPinnedNotes').innerText = notes.filter(n => n.pinned).length;
+            document.getElementById('modalStatTotalTags').innerText = allTags.length;
+            document.getElementById('modalStatTotalGroups').innerText = tagGroups.length;
+        }
+
+        function toggleTagListCollapse() {
+            isTagListCollapsed = !isTagListCollapsed;
+            renderTags();
+        }
+
+        function openDataModal() {
+            renderStats();
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+
+        function closeDataModal() {
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function selectTag(tag) {
+            selectedTag = tag;
+            selectedGroup = null; // Clear group filter when specific tag is clicked
+            render();
+        }
+
+        function selectGroup(groupId) {
+            selectedGroup = groupId;
+            selectedTag = null; // Clear tag filter when group is clicked
+            render();
+        }
+
+        function toggleGroupCollapse(groupId) {
+            collapsedGroups[groupId] = !collapsedGroups[groupId];
+            renderTags();
+        }
+
+        function clearTagFilter() {
+            selectedTag = null;
+            selectedGroup = null;
+            render();
+        }
+
+        function resetFilters() {
+            selectedTag = null;
+            selectedGroup = null;
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            render();
+        }
+
+        function openGroupModal(groupId = null) {
+            const modal = document.getElementById('groupModal');
+            const editId = document.getElementById('editGroupId');
+            const nameInput = document.getElementById('groupNameInput');
+            const titleEl = document.getElementById('groupModalTitle');
+            const deleteBtn = document.getElementById('deleteGroupBtn');
+            const checkboxesEl = document.getElementById('groupTagCheckboxes');
+
+            const tagCounts = getAllTags();
+            const allTags = Object.keys(tagCounts).sort();
+
+            if (groupId) {
+                const group = tagGroups.find(g => g.id === groupId);
+                if (group) {
+                    editId.value = group.id;
+                    nameInput.value = group.name;
+                    titleEl.innerText = '태그 그룹 수정';
+                    deleteBtn.classList.remove('hidden');
+                }
+            } else {
+                editId.value = '';
+                nameInput.value = '';
+                titleEl.innerText = '새 태그 그룹 추가';
+                deleteBtn.classList.add('hidden');
+            }
+
+            // Render existing tags checkbox list
+            const currentGroupTags = groupId ? (tagGroups.find(g => g.id === groupId)?.tags || []) : [];
+
+            if (allTags.length === 0) {
+                checkboxesEl.innerHTML = `<span class="text-xs text-mono-400 italic">등록된 태그가 없습니다. 메모에 태그를 작성해 보세요.</span>`;
+            } else {
+                checkboxesEl.innerHTML = allTags.map(tag => {
+                    const isChecked = currentGroupTags.includes(tag);
+                    return `
+                        <label class="flex items-center space-x-2 text-xs font-mono cursor-pointer hover:bg-mono-100 dark:hover:bg-mono-800 p-1 rounded transition">
+                            <input type="checkbox" value="${escapeHtml(tag)}" ${isChecked ? 'checked' : ''} class="group-tag-checkbox rounded border-mono-300 dark:border-mono-700 text-mono-900">
+                            <span># ${escapeHtml(tag)}</span>
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeGroupModal() {
+            document.getElementById('groupModal').classList.add('hidden');
+        }
+
+        function saveGroup() {
+            const editId = document.getElementById('editGroupId').value;
+            const name = document.getElementById('groupNameInput').value.trim();
+
+            if (!name) {
+                showToast('그룹 이름을 입력해 주세요.');
+                return;
+            }
+
+            const checkedTags = Array.from(document.querySelectorAll('.group-tag-checkbox:checked')).map(cb => cb.value);
+
+            if (editId) {
+                const grpIdx = tagGroups.findIndex(g => g.id === editId);
+                if (grpIdx !== -1) {
+                    tagGroups[grpIdx] = { ...tagGroups[grpIdx], name, tags: checkedTags };
+                }
+                showToast('태그 그룹이 수정되었습니다.');
+            } else {
+                tagGroups.push({
+                    id: 'g_' + Date.now(),
+                    name,
+                    tags: checkedTags
+                });
+                showToast('새 태그 그룹이 생성되었습니다.');
+            }
+
+            saveGroupsToStorage();
+            closeGroupModal();
+            render();
+        }
+
+        function deleteGroupFromModal() {
+            const editId = document.getElementById('editGroupId').value;
+            if (!editId) return;
+
+            tagGroups = tagGroups.filter(g => g.id !== editId);
+            if (selectedGroup === editId) selectedGroup = null;
+
+            saveGroupsToStorage();
+            closeGroupModal();
+            render();
+            showToast('태그 그룹이 삭제되었습니다.');
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            renderNotes();
+        }
+
+        function openNoteModal(noteId = null) {
+            const modal = document.getElementById('noteModal');
+            const titleInput = document.getElementById('noteTitleInput');
+            const contentInput = document.getElementById('noteContentInput');
+            const tagsInput = document.getElementById('noteTagsInput');
+            const pinInput = document.getElementById('notePinInput');
+            const editIdInput = document.getElementById('editNoteId');
+            const modalTitle = document.getElementById('modalTitle');
+
+            if (noteId) {
+                const note = notes.find(n => n.id === noteId);
+                if (note) {
+                    editIdInput.value = note.id;
+                    titleInput.value = note.title || '';
+                    contentInput.value = note.content || '';
+                    tagsInput.value = (note.tags || []).join(', ');
+                    pinInput.checked = !!note.pinned;
+                    modalTitle.innerText = '메모 수정';
+                }
+            } else {
+                editIdInput.value = '';
+                titleInput.value = '';
+                contentInput.value = '';
+                tagsInput.value = selectedTag ? selectedTag : '';
+                pinInput.checked = false;
+                modalTitle.innerText = '새 메모 작성';
+            }
+
+            modal.classList.remove('hidden');
+            titleInput.focus();
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.add('hidden');
+        }
+
+        function saveNote() {
+            const editId = document.getElementById('editNoteId').value;
+            const title = document.getElementById('noteTitleInput').value.trim();
+            const content = document.getElementById('noteContentInput').value.trim();
+            const rawTags = document.getElementById('noteTagsInput').value;
+            const pinned = document.getElementById('notePinInput').checked;
+
+            if (!title && !content) {
+                showToast('제목이나 내용을 입력해주세요.');
+                return;
+            }
+
+            // Extract tags from tag input field
+            const explicitTags = rawTags.split(/[, ]+/)
+                .map(t => t.trim().replace(/^#/, ''))
+                .filter(Boolean);
+
+            // Auto-extract tags from content
+            const inlineTags = extractHashtags(content);
+
+            // Merge and deduplicate
+            const finalTags = Array.from(new Set([...explicitTags, ...inlineTags]));
+
+            const now = Date.now();
+
+            if (editId) {
+                // Update existing
+                const noteIndex = notes.findIndex(n => n.id === editId);
+                if (noteIndex !== -1) {
+                    notes[noteIndex] = {
+                        ...notes[noteIndex],
+                        title,
+                        content,
+                        tags: finalTags,
+                        pinned,
+                        updatedAt: now
+                    };
+                }
+                showToast('메모가 수정되었습니다.');
+            } else {
+                // Create new
+                const newNote = {
+                    id: Date.now().toString(),
+                    title,
+                    content,
+                    tags: finalTags,
+                    pinned,
+                    createdAt: now,
+                    updatedAt: now
+                };
+                notes.unshift(newNote);
+                showToast('새 메모가 추가되었습니다.');
+            }
+
+            saveToStorage();
+            closeNoteModal();
+            render();
+        }
+
+        function deleteNote(id) {
+            notes = notes.filter(n => n.id !== id);
+            saveToStorage();
+            render();
+            showToast('메모가 삭제되었습니다.');
+        }
+
+        function togglePin(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                note.pinned = !note.pinned;
+                saveToStorage();
+                render();
+                showToast(note.pinned ? '상단에 고정되었습니다.' : '고정이 해제되었습니다.');
+            }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `mono_memo_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('데이터가 내보내졌습니다.');
+        }
+
+        function importDataTrigger() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        notes = imported;
+                        saveToStorage();
+                        render();
+                        showToast('백업 데이터가 성공적으로 로드되었습니다.');
+                    } else {
+                        showToast('올바르지 않은 데이터 형식입니다.');
+                    }
+                } catch (err) {
+                    showToast('파일을 읽는 도중 오류가 발생했습니다.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function initTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const icon = document.getElementById('themeIcon');
+            if (isDark) {
+                icon.className = 'fa-solid fa-sun text-sm';
+            } else {
+                icon.className = 'fa-solid fa-moon text-sm';
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function toggleTaskCheckbox(noteId, taskIndex, isChecked) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+
+            let currentIndex = 0;
+            const taskRegex = /^(\s*[-*+]\s*\[)([ xX])(\])/gm;
+            
+            note.content = note.content.replace(taskRegex, (match, prefix, state, suffix) => {
+                if (currentIndex === taskIndex) {
+                    currentIndex++;
+                    return prefix + (isChecked ? 'x' : ' ') + suffix;
+                }
+                currentIndex++;
+                return match;
+            });
+
+            note.updatedAt = Date.now();
+            saveToStorage();
+            render();
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function insertMarkdown(prefix, suffix = '', defaultText = '') {
+            const textarea = document.getElementById('noteContentInput');
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            // If text is selected, wrap or prepend to selection, else insert default text
+            const selectedText = text.substring(start, end) || defaultText;
+            const replacement = prefix + selectedText + suffix;
+
+            textarea.value = text.substring(0, start) + replacement + text.substring(end);
+            
+            // Set cursor / selection position right over the inserted content
+            const newCursorStart = start + prefix.length;
+            const newCursorEnd = newCursorStart + selectedText.length;
+            
+            textarea.focus();
+            textarea.setSelectionRange(newCursorStart, newCursorEnd);
+        }
+    </script>
+</body>
+</html>

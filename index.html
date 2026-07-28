@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruchiworld_App_DASHBOARD</title>
+  <style>
+    :root {
+      --bg-color: #dcdcdc;
+      --border-dark: #000000;
+      --text-main: #000000;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-mono);
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        radial-gradient(#000000 1px, transparent 0);
+      background-size: 16px 16px;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Window Container */
+    .window-container {
+      width: 100%;
+      max-width: 880px;
+      background: #c0c0c0;
+      border: 3px solid var(--border-dark);
+      box-shadow: 6px 6px 0px #000000;
+    }
+
+    .title-bar {
+      background: #000000;
+      color: #ffffff;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .title-bar-controls span {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background: #ffffff;
+      border: 1px solid #000;
+      margin-left: 4px;
+      text-align: center;
+      line-height: 12px;
+      font-size: 10px;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .content-area {
+      padding: 28px;
+    }
+
+    .header-text {
+      text-align: center;
+      margin-bottom: 28px;
+      border-bottom: 2px dashed #000;
+      padding-bottom: 12px;
+    }
+
+    .header-text h1 {
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* 3x2 Grid (3개씩 2줄) */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .card-grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    /* Y2K Card Item */
+    .card {
+      background: #ffffff;
+      border: 2px solid #000;
+      box-shadow: 4px 4px 0px #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0px #000;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-num {
+      font-size: 0.8rem;
+      font-weight: bold;
+      background: #000;
+      color: #fff;
+      padding: 2px 6px;
+    }
+
+    .card-icon {
+      font-size: 1rem;
+    }
+
+    .card-body {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .card-url-preview {
+      font-size: 0.75rem;
+      color: #666;
+      word-break: break-all;
+    }
+
+    .btn-link {
+      width: 100%;
+      padding: 10px 0;
+      background: #000000;
+      color: #ffffff;
+      text-decoration: none;
+      text-align: center;
+      font-weight: bold;
+      font-size: 0.85rem;
+      border: 1px solid #000;
+      display: block;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-link:hover {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="window-container">
+    <div class="title-bar">
+      <span>✦ RUCHI_APP_NAVIGATOR.EXE</span>
+      <div class="title-bar-controls">
+        <span>_</span>
+        <span>□</span>
+        <span>X</span>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="header-text">
+        <h1>[ RUCHI_APP_NAVIGATION ]</h1>
+        <p style="font-size: 0.8rem; margin-top: 4px;">Click any button to open destination</p>
+      </div>
+
+      <div class="card-grid" id="cardGrid">
+        <!-- JS로 링크 카드가 생성됩니다 -->
+      </div>
+    </div>
+  </div>
+
+  <footer>RUCHIMOND SYSTEM // Y2K MONOTONE EDITION</footer>
+
+  <script>
+    // 💡 여기서 카드의 이름(title)과 링크(url)를 직접 수정하실 수 있습니다.
+    const CARDS_DATA = [
+      { num: '01', title: 'Timer', url: 'my-apps/pomodoro_timer.html' },
+      { num: '02', title: 'memo', url: 'my-apps/mono_memo.html' },
+      { num: '03', title: 'X', url: 'X' },
+      { num: '04', title: 'X', url: 'x' },
+      { num: '05', title: 'X', url: 'x' },
+      { num: '06', title: 'X', url: 'x' }
+    ];
+
+    function renderGrid() {
+      const grid = document.getElementById('cardGrid');
+      grid.innerHTML = '';
+
+      CARDS_DATA.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="card-num">${item.num}</span>
+            <span class="card-icon">✦</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${item.title}</div>
+            <!-- <div class="card-url-preview">${item.url}</div> -->
+          </div>
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-link">RUN ▶</a>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    renderGrid();
+  </script>
+</body>
+</html>
